@@ -38,7 +38,7 @@ with blazer.begin():
     ])
     blazer.print("PARALLEL1:",result1)
 
-    if rank == 0:
+    if blazer.ROOT:
         r = list(
             result1
             | where(lambda g: where(lambda g: g['this'] > 1))

@@ -15,8 +15,10 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+MASTER = rank == 0
 
 from contextlib import contextmanager
+from contextlib import nullcontext as skip
 
 @contextmanager
 def begin(*args, **kwds):
