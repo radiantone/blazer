@@ -65,3 +65,8 @@ blazer.print("PIPELINE RESULT:",result)
 
 blazer.stop()
 ```
+
+To run:
+```
+(venv) $ mpirun -n 4 python blazer/examples/example1.py 
+```
