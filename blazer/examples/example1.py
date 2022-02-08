@@ -1,4 +1,5 @@
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, stop
+import blazer
+from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank
 
 def calc_some(value, *args):
     """ Do some calculations """
@@ -30,8 +31,7 @@ r=parallel([
     p(calc_stuff, 1),
     p(calc_stuff, 2)
 ])
-if rank == 0:
-    print("PARALLEL:",r)
+blazer.print("PARALLEL:",r)
 
 r=pipeline([
     p(calc_stuff, 'DATA'),
@@ -41,8 +41,7 @@ r=pipeline([
     ]),
     calc_stuff
 ])
-if rank == 0:
-    print("PIPELINE:",r)
+blazer.print("PIPELINE:",r)
 
 result = pipeline([
     p(calc_stuff, INPUT_DATA), 
@@ -58,7 +57,6 @@ result = pipeline([
     calc_more_stuff
 ])
 
-if rank == 0:
-    print("PIPELINE RESULT:",result)
+blazer.print("PIPELINE RESULT:",result)
 
-stop()
+blazer.stop()

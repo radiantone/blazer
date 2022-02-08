@@ -1,4 +1,4 @@
-from .primitives import (parallel, scatter, pipeline, rank, stop)
+from .primitives import (parallel, scatter, pipeline, rank)
 from functools import partial
 from pipe import select, where
 from pydash import flatten, chunk, omit, get, filter_ as filter
@@ -16,7 +16,6 @@ __all__ = (
     'omit',
     'get',
     'rank',
-    'stop',
     'filter'
 )
 

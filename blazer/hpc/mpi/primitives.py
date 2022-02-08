@@ -15,6 +15,10 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+def mprint(*args):
+    if rank == 0:
+        print(*args)
+        
 def stop():
     for i in range(1,size):
         comm.send("break", dest=i)
