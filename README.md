@@ -1,4 +1,7 @@
 # blazer
+![Blazer Logo](images/blazer-logo.svg)
+
+
 An HPC abstraction over MPI that uses pipes and pydash primitives.
 
 ```python
