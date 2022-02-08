@@ -52,7 +52,7 @@ with blazer.begin():
         p(calc_stuff, 'DATA'),
         p(pipeline, [
             calc_some,
-            calc_some
+            add_date
         ]),
         calc_stuff
     ])
@@ -65,6 +65,10 @@ with blazer.begin():
             calc_some,
             p(pipeline,[
                 calc_stuff,
+                p(parallel, [
+                    calc_some,
+                    calc_some
+                ]),
                 calc_stuff
             ]),
             calc_some
