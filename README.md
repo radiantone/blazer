@@ -83,7 +83,8 @@ with blazer.begin():
 To run:
 ```
 (venv) $ mpirun -n 4 python blazer/examples/example1.py 
-PARALLEL: [{'this': 1}, {'this': 2}]
+PARALLEL1: [{'this': 1}, {'this': 2}, {'this': 3}, {'this': 4}, {'this': 5}]
+PARALLEL2: [{'this': 4}, {'this': 6}, {'this': 2}, {'this': 8}, {'this': 10}]
 PIPELINE: {'this': {'some': {'some': ({'this': 'DATA'},)}}}
-PIPELINE RESULT: [{'this': {'some': {'this': 'that', 'date': '2022-02-08 08:35:17.019393'}}}, {'some': 'this'}, {'more': 'stuff'}]
+PIPELINE RESULT: [{'this': {'some': {'this': 'that', 'date': '2022-02-08 09:37:07.417365'}}}, {'some': 'this'}, {'more': 'stuff'}]
 ```
