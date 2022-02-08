@@ -69,4 +69,7 @@ blazer.stop()
 To run:
 ```
 (venv) $ mpirun -n 4 python blazer/examples/example1.py 
+PARALLEL: [{'this': 1}, {'this': 2}]
+PIPELINE: {'this': {'some': {'some': ({'this': 'DATA'},)}}}
+PIPELINE RESULT: [{'this': {'some': {'this': 'that', 'date': '2022-02-08 08:35:17.019393'}}}, {'some': 'this'}, {'more': 'stuff'}]
 ```
