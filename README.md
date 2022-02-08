@@ -1,4 +1,4 @@
-![Blazer Logo](./img/blazer-logo.svg)
+![Blazer Logo](./img/blazer-logo-small.svg)
 
 
 An HPC abstraction over MPI that uses pipes and pydash primitives.
