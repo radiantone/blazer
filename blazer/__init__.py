@@ -1,6 +1,7 @@
-from .hpc.mpi.primitives import stop, mprint as print
+from .hpc.mpi.primitives import stop, begin, mprint as print
 
-__all__ = [
-    'stop'
+__all__ = (
+    'stop',
+    'begin',
     'print'
-]
+)

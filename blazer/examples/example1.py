@@ -27,36 +27,49 @@ def calc_more_stuff(result):
 
 INPUT_DATA = 'that'
 
-r=parallel([ 
-    p(calc_stuff, 1),
-    p(calc_stuff, 2)
-])
-blazer.print("PARALLEL:",r)
+with blazer.begin():
+    
+    result1=parallel([ 
+        p(calc_stuff, 1),
+        p(calc_stuff, 2),
+        p(calc_stuff, 3),
+        p(calc_stuff, 4),
+        p(calc_stuff, 5)
+    ])
+    blazer.print("PARALLEL1:",result1)
 
-r=pipeline([
-    p(calc_stuff, 'DATA'),
-    p(pipeline, [
-        calc_some,
-        calc_some
-    ]),
-    calc_stuff
-])
-blazer.print("PIPELINE:",r)
+    if rank == 0:
+        r = list(
+            result1
+            | where(lambda g: where(lambda g: g['this'] > 1))
+            | select(lambda g: p(calc_stuff, g['this']*2))
+        )
+        # Run the composed computation in parallel, wait for result
+        result = parallel(r)
+        blazer.print("PARALLEL2:",result)
 
-result = pipeline([
-    p(calc_stuff, INPUT_DATA), 
-    add_date,
-    p(parallel,[ 
-        calc_some,
-        p(pipeline,[
-            calc_stuff,
-            calc_stuff
+    r=pipeline([
+        p(calc_stuff, 'DATA'),
+        p(pipeline, [
+            calc_some,
+            calc_some
         ]),
-        calc_some
-    ]),
-    calc_more_stuff
-])
+        calc_stuff
+    ])
+    blazer.print("PIPELINE:",r)
 
-blazer.print("PIPELINE RESULT:",result)
+    result = pipeline([
+        p(calc_stuff, INPUT_DATA), 
+        add_date,
+        p(parallel,[ 
+            calc_some,
+            p(pipeline,[
+                calc_stuff,
+                calc_stuff
+            ]),
+            calc_some
+        ]),
+        calc_more_stuff
+    ])
 
-blazer.stop()
+    blazer.print("PIPELINE RESULT:",result)
