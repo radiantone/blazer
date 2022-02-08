@@ -1,7 +1,7 @@
 # blazer
 An HPC abstraction over MPI that uses pipes and pydash primitives.
 
-```
+```python
 import blazer
 from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank
 
