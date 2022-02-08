@@ -5,9 +5,9 @@
    version="1.1"
    id="svg865"
    xml:space="preserve"
-   width="1500"
-   height="1500"
-   viewBox="0 0 1500 1500"
+   width="700"
+   height="700"
+   viewBox="0 0 700 700"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"><defs
      id="defs869"><clipPath
@@ -136,7 +136,8 @@
          id="stop987" /></linearGradient></defs><g
      id="g871"
      transform="matrix(1.3333333,0,0,-1.3333333,0,2533.3333)"><g
-       id="g14689"><g
+       id="g14689"
+       transform="matrix(0.43943808,0,0,0.43943808,11.867941,1067.2412)"><g
          id="g887"
          transform="matrix(0.1,0,0,0.1,-842.09373,405.45213)"><g
            id="g889"
