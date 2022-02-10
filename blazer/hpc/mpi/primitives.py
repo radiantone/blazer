@@ -78,8 +78,11 @@ def parallel(defers: List, *args):
                 logging.debug("parallel Sending defer %s to rank %s %s",defer, dest_rank, last_result)
                 if type(defer) is partial:
                     fname = defer.func.__name__
-                else:
+                elif hasattr(defer,'__name__'):
                     fname = defer.__name__
+                else:
+                    # We have object data and need to pass it along
+                    continue
                 
                 logging.debug("FNAME %s", fname)
                 if fname in ['parallel','pipeline']:
@@ -109,7 +112,23 @@ def parallel(defers: List, *args):
         return results
 
 def scatter(data: Any, func: Callable):
-    pass
+    def chunker(iterable, chunksize):
+        for i,c in enumerate(iterable[::chunksize]):
+            yield iterable[i*chunksize:(i+1)*chunksize]
+
+    chunked_data = chunker(data, size)
+
+    results = []
+    for i, chunk in enumerate(chunked_data):
+        if len(chunk) < size:
+            chunk += [None for i in range(len(chunk),size)]
+
+        data = comm.scatter(chunk, root=0)
+        _data = func(data)
+        newData = comm.gather(_data,root=0)
+        results += [newData]
+
+    return results
 
 def pipeline(defers : List, *args):
     """ This will use the master node 0 scheduler to orchestrate results """
@@ -130,8 +149,11 @@ def pipeline(defers : List, *args):
                 logging.debug("Pipeline Sending defer %s to rank %s %s",defer,dest_rank,last_result)
                 if type(defer) is partial:
                     fname = defer.func.__name__
-                else:
+                elif hasattr(defer,'__name__'):
                     fname = defer.__name__
+                else:
+                    # We have object data and need to pass it along
+                    continue
                 
                 logging.debug("FNAME %s", fname)
                 if fname in ['parallel','pipeline']:

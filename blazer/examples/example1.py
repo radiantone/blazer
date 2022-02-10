@@ -1,5 +1,5 @@
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank
+from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
 
 def calc_some(value, *args):
     """ Do some calculations """
@@ -58,9 +58,13 @@ with blazer.begin():
     ])
     blazer.print("PIPELINE:",r)
 
+    scatter_data = scatter(list(range(0,(size*2)+2)), calc_some)
+    blazer.print("SCATTER_DATA:",scatter_data)
+
     result = pipeline([
         p(calc_stuff, INPUT_DATA), 
         add_date,
+        scatter_data,
         p(parallel,[ 
             calc_some,
             p(pipeline,[
@@ -77,3 +81,6 @@ with blazer.begin():
     ])
 
     blazer.print("PIPELINE RESULT:",result)
+
+    result = scatter(list(range(0,size*2)), calc_some)
+    blazer.print("SCATTER:",result)
