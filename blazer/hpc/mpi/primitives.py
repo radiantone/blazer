@@ -76,13 +76,19 @@ def parallel(defers: List, *args):
                 comm.send(dill.dumps(defer), dest=dest_rank)
             else:
                 logging.debug("parallel Sending defer %s to rank %s %s",defer, dest_rank, last_result)
+                fname = None
                 if type(defer) is partial:
                     fname = defer.func.__name__
                 elif hasattr(defer,'__name__'):
                     fname = defer.__name__
                 else:
                     # We have object data and need to pass it along
-                    continue
+                    _defer = defer
+                    def get_value(*args):
+                        return _defer
+
+                    defer = get_value
+                    fname = 'get_value'
                 
                 logging.debug("FNAME %s", fname)
                 if fname in ['parallel','pipeline']:
@@ -112,6 +118,7 @@ def parallel(defers: List, *args):
         return results
 
 def scatter(data: Any, func: Callable):
+    """ Scatter """
     def chunker(iterable, chunksize):
         for i,c in enumerate(iterable[::chunksize]):
             yield iterable[i*chunksize:(i+1)*chunksize]
@@ -147,15 +154,19 @@ def pipeline(defers : List, *args):
                 comm.send(dill.dumps(defer), dest=dest_rank)
             else:
                 logging.debug("Pipeline Sending defer %s to rank %s %s",defer,dest_rank,last_result)
+                fname = None
                 if type(defer) is partial:
                     fname = defer.func.__name__
                 elif hasattr(defer,'__name__'):
                     fname = defer.__name__
                 else:
-                    # We have object data and need to pass it along
-                    continue
-                
-                logging.debug("FNAME %s", fname)
+                    _defer = defer
+                    def get_value(*args):
+                        return _defer
+
+                    defer = get_value
+                    fname = 'get_value'
+
                 if fname in ['parallel','pipeline']:
                     logging.debug("PIPELINE EXECUTING %s %s",defer,last_result)
                     # Just execute the parallel since I am already at rank 0
