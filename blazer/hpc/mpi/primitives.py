@@ -117,16 +117,26 @@ def parallel(defers: List, *args):
         logging.debug("parallel return results %s",results)
         return results
 
+def enumrate(gen):
+   i = 0
+   for a in gen:
+     yield i, a
+     i += 1
+
 def scatter(data: Any, func: Callable):
     """ Scatter """
-    def chunker(iterable, chunksize):
-        for i,c in enumerate(iterable[::chunksize]):
-            yield iterable[i*chunksize:(i+1)*chunksize]
+    def chunker(generator, chunksize):
+        chunk = []
+        for i,c in enumrate(generator):
+            chunk += [c]
+            if i % chunksize == 0:
+                yield chunk
+                chunk = []
 
     chunked_data = chunker(data, size)
 
     results = []
-    for i, chunk in enumerate(chunked_data):
+    for i, chunk in enumrate(chunked_data):
         if len(chunk) < size:
             chunk += [None for i in range(len(chunk),size)]
 
