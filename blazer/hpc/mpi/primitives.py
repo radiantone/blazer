@@ -5,6 +5,7 @@ from typing import List, Any, Callable
 from mpi4py import MPI
 from functools import partial
 from threading import Thread
+from pydash import flatten
 
 import dill
 import logging
@@ -129,12 +130,13 @@ def scatter(data: Any, func: Callable):
         chunk = []
         for i,c in enumrate(generator):
             chunk += [c]
-            if i % chunksize == 0:
+            if len(chunk) == size:
                 yield chunk
                 chunk = []
+        if len(chunk) > 0:
+            yield chunk
 
     chunked_data = chunker(data, size)
-
     results = []
     for i, chunk in enumrate(chunked_data):
         if len(chunk) < size:
@@ -145,7 +147,7 @@ def scatter(data: Any, func: Callable):
         newData = comm.gather(_data,root=0)
         results += [newData]
 
-    return results
+    return flatten(results)
 
 def pipeline(defers : List, *args):
     """ This will use the master node 0 scheduler to orchestrate results """
