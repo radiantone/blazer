@@ -48,6 +48,7 @@ with blazer.begin():
     ])
 
     def get_data():
+        """ Data generator """
         for i in range(0,(size*2)+2):
             yield i
 
