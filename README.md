@@ -103,8 +103,8 @@ To run:
 (venv) $ mpirun -n 4 python blazer/examples/example1.py 
 PARALLEL1: [{'this': 1}, {'this': 2}, {'this': 3}, {'this': 4}, {'this': 5}]
 PARALLEL2: [{'this': 4}, {'this': 6}, {'this': 2}, {'this': 8}, {'this': 10}]
-PIPELINE: {'this': {'some': ({'this': 'DATA'},), 'date': '2022-02-11 02:41:46.894866'}}
-SCATTER_DATA: [[{'some': 0}, {'some': None}, {'some': None}, {'some': None}], [{'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}], [{'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}]]
-PIPELINE RESULT: [{'this': [{'this': ([[{'some': 0}, {'some': None}, {'some': None}, {'some': None}], [{'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}], [{'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}]],)}, {'some': {'some': [[{'some': 0}, {'some': None}, {'some': None}, {'some': None}], [{'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}], [{'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}]]}}]}, {'some': 'some'}, {'more': 'stuff'}]
-SCATTER: [[{'some': 0}, {'some': None}, {'some': None}, {'some': None}], [{'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}]]
-```
+PIPELINE: {'this': {'some': ({'this': 'DATA'},), 'date': '2022-02-11 02:47:23.356461'}}
+SCATTER_DATA: [{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}, {'some': 9}, {'some': None}, {'some': None}]
+PIPELINE RESULT: [{'this': [{'this': ([{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}, {'some': 9}, {'some': None}, {'some': None}],)}, {'some': {'some': [{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}, {'some': 9}, {'some': None}, {'some': None}]}}]}, {'some': 'some'}, {'more': 'stuff'}]
+[0, 1, 2, 3, 4, 5, 6, 7]
+SCATTER: [{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}]```
