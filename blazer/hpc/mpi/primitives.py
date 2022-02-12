@@ -5,12 +5,13 @@ from typing import List, Any, Callable
 from mpi4py import MPI
 from functools import partial
 from threading import Thread
+from numpy import iterable
 from pydash import flatten
 
 import dill
 import logging
 logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
 )
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -36,6 +37,10 @@ def mprint(*args):
 def stop():
     for i in range(1,size):
         comm.send("break", dest=i)
+    if rank == 0:
+        logging.debug("Waiting on barrier")
+        comm.Barrier()
+        logging.debug("Barrier complete")
 
 if rank != 0:
     def run():
@@ -51,6 +56,8 @@ if rank != 0:
             result = defer()
             logging.debug("thread rank %s sending result %s",rank,result)
             comm.send(result, dest=0)
+        logging.debug(f"Rank {rank} notifying Barrier")
+        comm.Barrier()
 
     thread = Thread(target=run)
     thread.start()
@@ -123,6 +130,33 @@ def enumrate(gen):
    for a in gen:
      yield i, a
      i += 1
+
+def map(func: Callable, data: Any):
+    _funcs = []
+    for arg in data:
+        if iterable(arg):
+            _funcs += [partial(func, *arg)]
+        else:
+            _funcs += [partial(func, arg)]
+
+    if MASTER:
+        return parallel(_funcs)
+    else:
+        return None
+
+def reduce(func: Callable, data: Any):
+
+    _funcs = []
+    for arg in data:
+        if iterable(arg):
+            _funcs += [partial(func, *arg)]
+        else:
+            _funcs += [partial(func, arg)]
+
+    if MASTER:
+        return pipeline(_funcs)
+    else:
+        return None
 
 def scatter(data: Any, func: Callable):
     """ Scatter """
