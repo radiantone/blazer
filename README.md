@@ -100,6 +100,7 @@ with blazer.begin():
 
 To run:
 ```
+(venv) $ export PYTHONPATH=.
 (venv) $ mpirun -n 4 python blazer/examples/example1.py 
 PARALLEL1: [{'this': 1}, {'this': 2}, {'this': 3}, {'this': 4}, {'this': 5}]
 PARALLEL2: [{'this': 4}, {'this': 6}, {'this': 2}, {'this': 8}, {'this': 10}]
