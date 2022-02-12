@@ -11,7 +11,7 @@ from pydash import flatten
 import dill
 import logging
 logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
 )
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -147,12 +147,17 @@ def map(func: Callable, data: Any):
 def reduce(func: Callable, data: Any):
 
     _funcs = []
+    if data is None:
+        logging.debug("Returning None")
+        return None
     for arg in data:
+        logging.debug("ARG %s",arg)
         if iterable(arg):
             _funcs += [partial(func, *arg)]
         else:
             _funcs += [partial(func, arg)]
 
+    logging.debug("FUNCS %s", _funcs)
     if MASTER:
         return pipeline(_funcs)
     else:

@@ -109,3 +109,33 @@ SCATTER_DATA: [{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, 
 PIPELINE RESULT: [{'this': [{'this': ([{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}, {'some': 9}, {'some': None}, {'some': None}],)}, {'some': {'some': [{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}, {'some': 8}, {'some': 9}, {'some': None}, {'some': None}]}}]}, {'some': 'some'}, {'more': 'stuff'}]
 [0, 1, 2, 3, 4, 5, 6, 7]
 SCATTER: [{'some': 0}, {'some': 1}, {'some': 2}, {'some': 3}, {'some': 4}, {'some': 5}, {'some': 6}, {'some': 7}]```
+
+A map/reduce example
+
+```python
+import blazer
+from blazer.hpc.mpi import map, reduce
+
+def mult(x,y):
+    return x * y
+
+def add(x, y=0):
+    return x+y
+
+with blazer.begin():
+    result = map(mult, [(1,1), (2,2), (3,3), (4,4)])
+
+    blazer.print(result)
+    result = reduce(add, result)
+
+    blazer.print(result)
+
+```
+
+To run:
+```
+$ export PYTHONPATH=.
+$ mpirun -n 4 python blazer/examples/example3.py 
+[1, 4, 9, 16]
+30
+```
