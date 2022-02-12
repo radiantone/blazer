@@ -134,8 +134,8 @@ with blazer.begin():
 
 To run:
 ```
-$ export PYTHONPATH=.
-$ mpirun -n 4 python blazer/examples/example3.py 
+(venv) $ export PYTHONPATH=.
+(venv) $ mpirun -n 4 python blazer/examples/example3.py 
 [1, 4, 9, 16]
 30
 ```
