@@ -120,7 +120,7 @@ setup(
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
-    packages=['blazer'],
+    packages=['blazer', 'blazer.hpc', 'blazer.hpc.local', 'blazer.hpc.mpi'],
     include_package_data=True,
     python_requires=">=3.8.*",
     install_requires=[
