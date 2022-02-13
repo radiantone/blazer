@@ -30,7 +30,8 @@ jobs:
           draft: false
           prerelease: false
   deploy:
-    needs: Deploy
+    name: Publish to PyPi
+    needs: release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
