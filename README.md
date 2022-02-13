@@ -130,7 +130,6 @@ with blazer.begin():
     result = reduce(add, result)
 
     blazer.print(result)
-
 ```
 
 To run:
@@ -140,3 +139,28 @@ To run:
 [1, 4, 9, 16]
 30
 ```
+
+> NOTE: blazer has only been tested on `mpirun (Open MPI) 4.1.0`
+## Overview
+
+Blazer is a _high-performance computing_ (HPC) library that hides the complexities of a super computer's _message-passing interface_ or (MPI).
+Users want to focus on their code and their data and not fuss with low-level API's for orchestrating results, building pipelines and running fast, parallel code. This is why blazer exists!
+
+With blazer, a user only needs to work with simple, straightforward python. No cumbersome API's, idioms, or decorators are needed.
+This means they can get started quicker, run faster code, and get their jobs done _faster_!
+
+### General Design
+
+Blazer is designed around the concept of computing _primitives_ or operations. Some of the primitives include:
+
+- **parallel** - For computing a list of tasks in parallel
+- **pipeline** - For computing a list of tasks in sequence, passing the results along
+- **map** - For mapping a task to a dataset
+- **reduce** - For mapping a task to a data list and computing a single result
+
+In addition there are other primitives to help manipulate lists of tasks or data, such as:
+
+- **where** - Filter a list of tasks or data elements based on a function or lambda
+- **select** - Apply a function to each list element and return the result
+
+
