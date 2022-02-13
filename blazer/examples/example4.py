@@ -1,5 +1,6 @@
 import blazer
 from blazer.hpc.mpi import map, reduce
+from pipe import Pipe
 
 
 def sqr(x):
@@ -9,6 +10,9 @@ def sqr(x):
 def add(x, y=0):
     return x + y
 
+
+if blazer.ROOT:
+    print("R", 5 | add | sqr)
 
 with blazer.begin():
     result = map(sqr, list(range(0, 100)))
