@@ -3,6 +3,22 @@
 
 An HPC abstraction over MPI that uses pipes and pydash primitives. Blazer will handle all the MPI orchestration behind the scenes for you. You just work strictly with data and functions. Easy!
 
+### Install
+
+From pypi
+```bash
+$ pip install blazer
+```
+
+From clone
+```bash
+$ python3 -m venv venv
+$ source venv/bin/activate
+(venv) $ pip install -r requirements.txt
+(venv) $ python setup.py install
+```
+
+### Examples
 ```python
 import blazer
 from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
