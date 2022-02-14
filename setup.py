@@ -126,6 +126,7 @@ setup(
     install_requires=[
         'pydash==5.1.0',
         'numpy==1.22.2',
+        'pipe==1.6.0',
         'mpi4py==3.1.3',
         'dill==0.3.4'
     ],
