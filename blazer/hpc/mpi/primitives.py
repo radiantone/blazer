@@ -23,12 +23,15 @@ size = comm.Get_size()
 
 MASTER = rank == 0
 
+logging.info(f"MY RANK {rank} and size {size}")
 
 @contextmanager
 def begin(*args, **kwds):
     try:
+        logging.debug("Yielding comm")
         yield comm
     finally:
+        logging.debug("Invoking stop()")
         stop()
 
 
@@ -38,9 +41,12 @@ def mprint(*args):
 
 
 def stop():
-    for i in range(1, size):
-        comm.send("break", dest=i)
+
+
     if rank == 0:
+        logging.debug("Sending break to all ranks")
+        for i in range(1, size):
+           comm.send("break", dest=i)
         logging.debug("Waiting on barrier")
         comm.Barrier()
         logging.debug("Barrier complete")
@@ -51,7 +57,7 @@ if rank != 0:
         while True:
             logging.debug("thread rank %s waiting on defer", rank)
             defer = comm.recv(source=0)
-            logging.debug("thread got data")
+            logging.debug("thread rank %s got data %s", rank, defer)
             if type(defer) is str and defer == "break":
                 logging.debug("Rank %s stopping", rank)
                 break
