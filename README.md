@@ -178,5 +178,3 @@ In addition there are other primitives to help manipulate lists of tasks or data
 
 - **where** - Filter a list of tasks or data elements based on a function or lambda
 - **select** - Apply a function to each list element and return the result
-
-
