@@ -2,10 +2,6 @@ import blazer
 from blazer.hpc.mpi import mapreduce, reduce, rank
 
 
-def sqr(x):
-    return x * x
-
-
 def add(values):
     if values and len(values):
         return sum(values)

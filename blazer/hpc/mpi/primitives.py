@@ -153,7 +153,7 @@ def enumrate(gen):
         i += 1
 
 
-def mapreduce(_map: Callable, _reduce: Callable, data: Any):
+def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
     """ Use scatter for map/reduce in one call """
     import numpy as np
 
@@ -164,12 +164,17 @@ def mapreduce(_map: Callable, _reduce: Callable, data: Any):
         _chunks = None
     data = comm.scatter(_chunks, root=0)
 
-    _data = _map(data.tolist())
+    listdata = data.tolist()
+    logging.info("MAP: %s",listdata)
+    _data = _map(listdata)
     newData = comm.gather(_data, root=0)
     results += [newData]
     _flattened = flatten(results)
     if None not in _flattened:
+        logging.info("REDUCE: %s",_flattened)
         _data = _reduce(_flattened)
+        if require_list and type(_data) is list:
+            mapreduce(_map, _reduce, _data)
         return _data
 
 def map(func: Callable, data: Any):

@@ -39,6 +39,5 @@ with blazer.begin():
         for i in range(0, (size * 2)):
             yield i
 
-
     result = scatter(get_data(), calc_some)
     blazer.print("SCATTER:", result)
