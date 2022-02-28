@@ -1,4 +1,4 @@
-from .primitives import (parallel, scatter, pipeline, reduce, map, rank, size)
+from .primitives import (parallel, scatter, pipeline, reduce, map, mapreduce, rank, size)
 from functools import partial
 from pipe import select, where
 from pydash import flatten, chunk, omit, get, filter_ as filter
@@ -9,6 +9,7 @@ __all__ = (
     'scatter',
     'pipeline',
     'map',
+    'mapreduce',
     'reduce',
     'partial',
     'select',

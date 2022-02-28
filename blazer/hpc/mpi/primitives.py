@@ -20,10 +20,15 @@ logging.basicConfig(
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
+host= MPI.Get_processor_name()
+
+global loop
+loop = True
 
 MASTER = rank == 0
 
-logging.info(f"MY RANK {rank} and size {size}")
+logging.debug(f"MY {host} RANK {rank} and size {size}")
+
 
 @contextmanager
 def begin(*args, **kwds):
@@ -31,8 +36,9 @@ def begin(*args, **kwds):
         logging.debug("Yielding comm")
         yield comm
     finally:
-        logging.debug("Invoking stop()")
-        stop()
+        logging.debug("Invoking stop(%s)",rank)
+        if rank == 0:
+            stop()
 
 
 def mprint(*args):
@@ -41,8 +47,10 @@ def mprint(*args):
 
 
 def stop():
+    """ Stop all workers """
+    global loop
 
-
+    logging.debug("Stopping %s, %s", rank,host)
     if rank == 0:
         logging.debug("Sending break to all ranks")
         for i in range(1, size):
@@ -54,7 +62,7 @@ def stop():
 
 if rank != 0:
     def run():
-        while True:
+        while loop:
             logging.debug("thread rank %s waiting on defer", rank)
             defer = comm.recv(source=0)
             logging.debug("thread rank %s got data %s", rank, defer)
@@ -145,6 +153,25 @@ def enumrate(gen):
         i += 1
 
 
+def mapreduce(_map: Callable, _reduce: Callable, data: Any):
+    """ Use scatter for map/reduce in one call """
+    import numpy as np
+
+    results = []
+    if rank == 0:
+        _chunks = np.array_split(data, size)
+    else:
+        _chunks = None
+    data = comm.scatter(_chunks, root=0)
+
+    _data = _map(data.tolist())
+    newData = comm.gather(_data, root=0)
+    results += [newData]
+    _flattened = flatten(results)
+    if None not in _flattened:
+        _data = _reduce(_flattened)
+        return _data
+
 def map(func: Callable, data: Any):
     _funcs = []
     for arg in data:
@@ -162,10 +189,8 @@ def map(func: Callable, data: Any):
 def reduce(func: Callable, data: Any):
     _funcs = []
     if data is None:
-        logging.debug("Returning None")
         return None
     for arg in data:
-        logging.debug("ARG %s", arg)
         if iterable(arg):
             _funcs += [partial(func, *arg)]
         else:
@@ -179,18 +204,21 @@ def reduce(func: Callable, data: Any):
 
 
 def scatter(data: Any, func: Callable):
-    """ Scatter """
-
+    """ This will create a generator to chunk the incoming data (which itself can be a generator)
+    Each chunk (which can itself be a list of data) will then be scattered with the function to all
+    ranks. """
+    
     def chunker(generator, chunksize):
         chunk = []
         for i, c in enumrate(generator):
             chunk += [c]
-            if len(chunk) == size:
+            if len(chunk) == chunksize:
                 yield chunk
                 chunk = []
         if len(chunk) > 0:
             yield chunk
 
+    
     chunked_data = chunker(data, size)
     results = []
     for i, chunk in enumrate(chunked_data):
@@ -199,11 +227,11 @@ def scatter(data: Any, func: Callable):
 
         data = comm.scatter(chunk, root=0)
         _data = func(data)
+        logging.debug("scatter[%s, %s]: Chunk %s %s, Func is %s Data is %s Result is %s", rank,host,i, chunk, func, data, _data)
         newData = comm.gather(_data, root=0)
         results += [newData]
 
     return flatten(results)
-
 
 def pipeline(defers: List, *args):
     """ This will use the master node 0 scheduler to orchestrate results """

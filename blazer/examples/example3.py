@@ -17,3 +17,4 @@ with blazer.begin():
     result = reduce(add, result)
 
     blazer.print(result)
+
