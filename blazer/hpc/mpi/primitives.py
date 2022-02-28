@@ -38,7 +38,11 @@ def begin(*args, **kwds):
     finally:
         logging.debug("Invoking stop(%s)",rank)
         if rank == 0:
-            stop()
+            logging.debug("kwds %s", kwds)
+            if 'stop' in kwds and kwds['stop']:
+                stop()
+            elif 'stop' not in kwds:
+                stop()
 
 
 def mprint(*args):

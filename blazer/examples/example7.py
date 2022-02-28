@@ -22,6 +22,6 @@ with blazer.begin():
     else:
         data = None
 
-    result = mapreduce(count, add, data, require_list=True)
+    result = mapreduce(count, add, data,)
 
     blazer.print("RESULT:", result)
