@@ -32,13 +32,14 @@ jobs:
   deploy:
     name: Publish to PyPi
     needs: release
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: '3.8'
+        python-version: '3.9'
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
