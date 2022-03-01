@@ -7,8 +7,10 @@ import getpass
 @Pipe
 def job(data, q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
     import time
+    import datetime
+
     print("COOLEY DATA",data)
-    
+
     _ssh = paramiko.SSHClient()
     _ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -18,14 +20,32 @@ def job(data, q="debug", n=1, t=5, A='datascience', venv=None, script=None, code
     else:
         _ssh.connect(hostname="cooley.alcf.anl.gov", username="dgovoni") # sshkey?
 
-    command = "ls -l"
+    if script:
+        command = f"qsub -t {t} -n {n} -q {q} {script}"
+    else:
+        command = f"qsub -t {t} -n {n} -q {q} {venv} {code}"
+
     _, stdout, _ = _ssh.exec_command(command)
 
+    job_id = None
     for line in stdout.read().splitlines():
-        print("SSH: cooley: stdout:", line)
+        parts = line.split()
+        if len(parts) == 1:
+            job_id = int(parts[0])
 
-        # Get job id from qsub
-        # Monitor until completion
+    start = datetime.datetime.now()
+    not_finished = True
+    while not_finished:
+        command = f"qstat -u dgovoni | grep {job_id}"
+        _, stdout, _ = _ssh.exec_command(command)
+        for line in stdout.read().splitlines():
+            if str(line).find("exiting") > -1:
+                not_finished = False
+        
+        now = datetime.datetime.now()
+        if now - start > datetime.timedelta(minutes=t):
+            not_finished = False
+        time.sleep(1)
 
     print("Cooley running...")
     time.sleep(3)
