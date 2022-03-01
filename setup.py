@@ -120,12 +120,13 @@ setup(
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
-    packages=['blazer', 'blazer.hpc', 'blazer.hpc.mpi'],
+    packages=['blazer', 'blazer.hpc', 'blazer.tests', 'blazer.hpc.mpi'],
     include_package_data=True,
     python_requires=">=3.8.*",
     install_requires=[
         'pydash==5.1.0',
         'numpy==1.22.2',
+        'pytest',
         'pipe==1.6.0',
         'mpi4py==3.1.3',
         'dill==0.3.4'

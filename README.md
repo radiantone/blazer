@@ -18,6 +18,16 @@ $ source venv/bin/activate
 (venv) $ python setup.py install
 ```
 
+### Tests
+```bash
+(venv) $ mpirun -n 2 python setup.py test
+blazer/tests/test_parallel.py::test_parallel PASSED                      [ 50%]
+blazer/tests/test_pipeline.py::test_pipeline PASSED                      [100%]
+
+============================== 2 passed in 0.48s ===============================
+ctrl-c
+```
+
 ### Examples
 ```python
 import blazer
