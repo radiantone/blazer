@@ -1,56 +1,77 @@
+import logging
+
 from contextlib import contextmanager
 import traceback
 from pipe import Pipe
 import paramiko
 import getpass
+from .then import Then
 
-@Pipe
-def job(data, q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
-    import time
-    import datetime
 
-    print("COOLEY DATA",data)
+@Then
+def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
 
-    _ssh = paramiko.SSHClient()
-    _ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    class Job:
 
-    if password:
-        pw = getpass.getpass("Password: ")
-        _ssh.connect(hostname="cooley.alcf.anl.gov", username="dgovoni", password=pw)
-    else:
-        _ssh.connect(hostname="cooley.alcf.anl.gov", username="dgovoni") # sshkey?
+        def __init__(self):
+            logging.debug("Job init")
+            self._ssh = paramiko.SSHClient()
+            self._ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    if script:
-        command = f"qsub -t {t} -n {n} -q {q} {script}"
-    else:
-        command = f"qsub -t {t} -n {n} -q {q} {venv} {code}"
+        def login(self):
+            logging.debug("Logging in from Job")
+            pw = getpass.getpass("Cooley MAF Password: ")
+            self._ssh.connect(hostname="cooley.alcf.anl.gov", username=user, password=pw)
 
-    _, stdout, _ = _ssh.exec_command(command)
+            return self
 
-    job_id = None
-    for line in stdout.read().splitlines():
-        parts = line.split()
-        if len(parts) == 1:
-            job_id = int(parts[0])
+        def __call__(self, *args, **kwargs):
+            logging.debug("Job call %s %s",args, kwargs)
+            import time
+            import datetime
 
-    start = datetime.datetime.now()
-    not_finished = True
-    while not_finished:
-        command = f"qstat -u dgovoni | grep {job_id}"
-        _, stdout, _ = _ssh.exec_command(command)
-        for line in stdout.read().splitlines():
-            if str(line).find("exiting") > -1:
-                not_finished = False
-        
-        now = datetime.datetime.now()
-        if now - start > datetime.timedelta(minutes=t):
-            not_finished = False
-        time.sleep(1)
+            data = "stubbed"
+            logging.debug("COOLEY DATA %s",data)
 
-    print("Cooley running...")
-    time.sleep(3)
+            if script:
+                command = f"qsub -t {t} -n {n} -q {q} {script}"
+            else:
+                command = f"qsub -t {t} -n {n} -q {q} {venv} {code}"
 
-    return "cooley" + data
+            _, stdout, _ = self._ssh.exec_command(command)
+
+            job_id = None
+            for line in stdout.read().splitlines():
+                parts = line.split()
+                if len(parts) == 1:
+                    job_id = int(parts[0])
+
+            start = datetime.datetime.now()
+            not_finished = True
+            while not_finished:
+                command = f"qstat -u {user} | grep {job_id}"
+                _, stdout, _ = self._ssh.exec_command(command)
+                for line in stdout.read().splitlines():
+                    if str(line).find("exiting") > -1:
+                        not_finished = False
+
+                    # Determine if job succeeded or failed.
+                    # If failed, throw exception
+                    if False:
+                        raise Exception()
+                
+                now = datetime.datetime.now()
+                if now - start > datetime.timedelta(minutes=t):
+                    not_finished = False
+                time.sleep(1)
+
+            logging.debug("Cooley exiting...")
+
+            self._ssh.close()
+            return "cooley" + str(data)
+
+    logging.debug("Returning job from cooley")
+    return Job()
 
 class run(object):
 
@@ -59,10 +80,10 @@ class run(object):
         stack = traceback.extract_stack()
         file, end = self._get_origin_info(stack,'__exit__')
         self.end = end
-        print("FILE",self.file,self.start,self.end)
+        logging.debug("FILE",self.file,self.start,self.end)
         with open(file) as code:
             lines = code.readlines()
-            print("COOLEY CODE:",lines[self.start:self.end])
+            logging.debug("COOLEY CODE: %s",lines[self.start:self.end])
 
     def __enter__(self):
         stack = traceback.extract_stack()

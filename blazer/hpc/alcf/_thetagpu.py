@@ -1,60 +1,70 @@
+import logging
+
 from contextlib import contextmanager
 import traceback
 from pipe import Pipe
 import paramiko
 import getpass
-from paramiko_expect import SSHClientInteraction
+from .then import Then
 
+@Then
+def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
 
-@Pipe
-def job(data, q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
-    import datetime
-    import time
+    class Job:
 
-    print("THETA DATA",data)
+        def __init__(self):
+            logging.debug("Job init")
+            self._ssh = paramiko.SSHClient()
+            self._ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    _ssh = paramiko.SSHClient()
-    _ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        def login(self):
 
-    if password:
-        pw = getpass.getpass("Password: ")
-        _ssh.connect(hostname="theta.alcf.anl.gov", username="dgovoni", password=pw)
-    else:
-        _ssh.connect(hostname="theta.alcf.anl.gov", username="dgovoni") # sshkey?
-    root_prompt = '.*$ '
+            pw = getpass.getpass("Theta MAF Password: ")
+            self._ssh.connect(hostname="theta.alcf.anl.gov", username=user, password=pw)
 
-    
-    if script:
-        command = f"ssh thetagpusn1 qsub -t {t} -n {n} -q {q} {script}"
-    else:
-        command = f"ssh thetagpusn1 qsub -t {t} -n {n} -q {q} {venv} {code}"
+            return self
 
-    _, stdout, _ = _ssh.exec_command(command)
+        def __call__(self, *args, **kwargs):
+            import datetime
+            import time
+            data = "stubbed"
+            logging.debug("THETA DATA %s %s %s",data, args, kwargs)
 
-    job_id = None
-    for line in stdout.read().splitlines():
-        parts = line.split()
-        if len(parts) == 1:
-            job_id = int(parts[0])
+            if script:
+                command = f"ssh thetagpusn1 qsub -t {t} -n {n} -q {q} {script}"
+            else:
+                command = f"ssh thetagpusn1 qsub -t {t} -n {n} -q {q} {venv} {code}"
 
-    start = datetime.datetime.now()
-    not_finished = True
-    assert job_id is not None
-    while not_finished:
-        command = f"ssh thetagpusn1 qstat -u dgovoni | grep {job_id}"
-        _, stdout, _ = _ssh.exec_command(command)
-        for line in stdout.read().splitlines():
-            print("LINE",line)
-            if str(line).find("exiting") > -1:
-                not_finished = False
-        
-        now = datetime.datetime.now()
-        if now - start > datetime.timedelta(minutes=t):
-            not_finished = False
-        time.sleep(1)
+            logging.debug("Executing command %s",command)
+            _, stdout, _ = self._ssh.exec_command(command)
 
-    _ssh.close()
-    return "thetagpu" + data
+            job_id = None
+            for line in stdout.read().splitlines():
+                parts = line.split()
+                if len(parts) == 1:
+                    job_id = int(parts[0])
+
+            start = datetime.datetime.now()
+            not_finished = True
+            logging.info("THETA SSH: job_id %s",job_id)
+            assert job_id is not None
+            while not_finished:
+                command = f"ssh thetagpusn1 qstat -u dgovoni | grep {job_id}"
+                _, stdout, _ = self._ssh.exec_command(command)
+                for line in stdout.read().splitlines():
+                    if str(line).find("exiting") > -1:
+                        not_finished = False
+                
+                now = datetime.datetime.now()
+                if now - start > datetime.timedelta(minutes=t):
+                    not_finished = False
+                time.sleep(1)
+
+            self._ssh.close()
+
+            return "thetagpu" + str(data)
+
+    return Job()
 
 class run(object):
 
@@ -63,10 +73,10 @@ class run(object):
         stack = traceback.extract_stack()
         file, end = self._get_origin_info(stack,'__exit__')
         self.end = end
-        print("FILE",self.file,self.start,self.end)
+        logging.debug("FILE %s",self.file,self.start,self.end)
         with open(file) as code:
             lines = code.readlines()
-            print("THETA CODE:",lines[self.start:self.end])
+            logging.debug("THETA CODE: %s",lines[self.start:self.end])
 
     def __enter__(self):
         stack = traceback.extract_stack()

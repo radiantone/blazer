@@ -188,3 +188,36 @@ In addition there are other primitives to help manipulate lists of tasks or data
 
 - **where** - Filter a list of tasks or data elements based on a function or lambda
 - **select** - Apply a function to each list element and return the result
+
+
+### Cross-Cluster Supercomputing
+
+Blazer comes with a built-in design pattern for performing cross-cluster HPC. This is useful if you want to allocate compute resources on different super-computers and then build a pipeline of jobs across them. Here is a simple example using ALCF's Cooley and Theta systems (which are built into blazer).
+
+```python
+from blazer.hpc.alcf import cooley, thetagpu
+from blazer.hpc.local import parallel, pipeline, partial as p
+
+# Log into each cluster using MAF password from MobilePASS
+cooleyjob   = cooley.job(user='dgovoni', n=1, q="debug", A="datascience", password=True, script="/home/dgovoni/git/blazer/testcooley.sh").login()       
+thetajob    = thetagpu.job(user='dgovoni', n=1, q="single-gpu", A="datascience", password=True, script="/home/dgovoni/git/blazer/testthetagpu.sh").login()
+
+def hello(data, *args):
+    return "Hello "+str(data)
+
+# Mix and match cluster compute jobs with local code tasks
+# in serial chaining
+cooleyjob("some data").then(hello).then(thetajob).then(hello)
+
+# Run a cross cluster compute job
+result = pipeline([
+    p(thetajob,"some data2"),
+    p(cooleyjob,"some data1")
+])
+
+print("Done")
+```
+
+When each job `.login()` method is run, it will gather the MAF login credentials for that system and then use that to schedule jobs on that system via ssh. 
+
+Notice the use of the `pipeline` primitive above. It's the same primitive you would use to build your compute workflows! Composable tasks and composable super-computers.

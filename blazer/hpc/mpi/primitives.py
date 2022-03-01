@@ -1,6 +1,11 @@
 """ MPI implementation of compute primitives 
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
+import logging
+
+logging.basicConfig(
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+)
 from typing import List, Any, Callable
 from mpi4py import MPI
 from functools import partial
@@ -12,11 +17,7 @@ from contextlib import contextmanager
 from contextlib import nullcontext as skip
 
 import dill
-import logging
 
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
-)
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()

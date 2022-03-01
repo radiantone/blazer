@@ -1,12 +1,21 @@
 from blazer.hpc.alcf import cooley, thetagpu
+from blazer.hpc.local import parallel, pipeline, partial as p
 
-job1 = cooley.job(n=2, q="debug", A="datascience", password=True, script="/home/dgovoni/git/blazer/testcooley.sh")            
-job2 = thetagpu.job(n=1, q="single-gpu", A="datascience", password=True, script="/home/dgovoni/git/blazer/testthetagpu.sh")
+# Log into each cluster using MAF password from MobilePASS
+cooleyjob   = cooley.job(user='dgovoni', n=1, q="debug", A="datascience", password=True, script="/home/dgovoni/git/blazer/testcooley.sh").login()       
+thetajob    = thetagpu.job(user='dgovoni', n=1, q="single-gpu", A="datascience", password=True, script="/home/dgovoni/git/blazer/testthetagpu.sh").login()
 
-result = "start" | job1 | job2
-print(result)
+def hello(data, *args):
+    return "Hello "+str(data)
 
-'''     
-job2 = thetagpu.job(n=1, q="single-gpu", A="datascience", venv="/home/dgovoni/git/blazer/venv/bin/python", password=True,
-                  code="/home/dgovoni/git/blazer/blazer/examples/example7.py")
-'''
+# Mix and match cluster compute jobs with local code tasks
+# in serial chaining
+cooleyjob("some data").then(hello).then(thetajob).then(hello)
+
+# Run a cross cluster compute job
+result = pipeline([
+    p(thetajob,"some data2"),
+    p(cooleyjob,"some data1")
+])
+
+print("Done")
