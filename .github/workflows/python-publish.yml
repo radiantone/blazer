@@ -32,7 +32,6 @@ jobs:
   deploy:
     name: Publish to PyPi
     needs: release
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
