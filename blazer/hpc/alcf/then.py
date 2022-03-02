@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Callable, Any
 from pipe import Pipe
 
 class JobClass:
@@ -25,13 +25,13 @@ class JobClass:
 
 
 class ThenClass:
-    from multiprocessing import Condition
-
-    lock = Condition()
-    result = None
+    
+    result : Any = None
 
     def __init__(self, func):
+        from multiprocessing import Condition
         self.func = func
+        self.lock = Condition()
 
     def __call__(self, *args, **kwargs):
         from functools import partial

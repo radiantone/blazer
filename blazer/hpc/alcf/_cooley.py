@@ -14,46 +14,60 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
     class Job:
 
         def __init__(self):
-            logging.debug("Job init")
+            logging.debug("[COOLEY]: Job init")
             self._ssh = paramiko.SSHClient()
             self._ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         def login(self):
-            logging.debug("Logging in from Job")
+            logging.debug("[COOLEY]: Logging in from Job")
             pw = getpass.getpass("Cooley MAF Password: ")
             self._ssh.connect(hostname="cooley.alcf.anl.gov", username=user, password=pw)
 
             return self
 
         def __call__(self, *args, **kwargs):
-            logging.debug("Job call %s %s",args, kwargs)
+            logging.info("[COOLEY]: Job call %s %s",args, kwargs)
             import time
             import datetime
 
             data = "stubbed"
-            logging.debug("COOLEY DATA %s",data)
 
             if script:
                 command = f"qsub -t {t} -n {n} -q {q} {script}"
             else:
                 command = f"qsub -t {t} -n {n} -q {q} {venv} {code}"
 
+            logging.info("[COOLEY]: executing command %s", command)
             _, stdout, _ = self._ssh.exec_command(command)
+            logging.info("[COOLEY]: executed command %s", command)
 
             job_id = None
             for line in stdout.read().splitlines():
+                logging.info("[COOLEY][qsub]: %s",line)
                 parts = line.split()
                 if len(parts) == 1:
                     job_id = int(parts[0])
 
+            logging.info("[COOLEY]: job_id %s", job_id)
             start = datetime.datetime.now()
             not_finished = True
+            is_exiting = False
             while not_finished:
                 command = f"qstat -u {user} | grep {job_id}"
                 _, stdout, _ = self._ssh.exec_command(command)
-                for line in stdout.read().splitlines():
+                lines = stdout.read().splitlines()
+
+                if len(lines) == 0 and is_exiting:
+                    logging.info(f"[COOLEY]: Job {job_id} has now completed.")
+                    not_finished = False
+
+                for line in lines:
                     if str(line).find("exiting") > -1:
-                        not_finished = False
+                        if q == "debug":
+                            logging.info("[COOLEY]: Waiting for job to exit debug queue.")
+                            is_exiting = True
+                        else:
+                            not_finished = False
 
                     # Determine if job succeeded or failed.
                     # If failed, throw exception
@@ -65,9 +79,8 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
                     not_finished = False
                 time.sleep(1)
 
-            logging.debug("Cooley exiting...")
-
-            self._ssh.close()
+            logging.debug("[COOLEY]: exiting...")
+            
             return "cooley" + str(data)
 
     logging.debug("Returning job from cooley")

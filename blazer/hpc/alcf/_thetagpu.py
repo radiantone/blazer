@@ -13,12 +13,12 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
     class Job:
 
         def __init__(self):
-            logging.debug("Job init")
+            logging.debug("[THETA]: Job init")
             self._ssh = paramiko.SSHClient()
             self._ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         def login(self):
-
+            logging.debug("[THETA]: Logging in from Job")
             pw = getpass.getpass("Theta MAF Password: ")
             self._ssh.connect(hostname="theta.alcf.anl.gov", username=user, password=pw)
 
@@ -28,15 +28,17 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
             import datetime
             import time
             data = "stubbed"
-            logging.debug("THETA DATA %s %s %s",data, args, kwargs)
+            logging.info("[THETA]: Job call %s %s",args, kwargs)
+            logging.debug("[THETA]: DATA %s %s %s",data, args, kwargs)
 
             if script:
                 command = f"ssh thetagpusn1 qsub -t {t} -n {n} -q {q} {script}"
             else:
                 command = f"ssh thetagpusn1 qsub -t {t} -n {n} -q {q} {venv} {code}"
 
-            logging.debug("Executing command %s",command)
+            logging.debug("[THETA]: Executing command %s",command)
             _, stdout, _ = self._ssh.exec_command(command)
+            logging.info("[THETA]: executed command %s", command)
 
             job_id = None
             for line in stdout.read().splitlines():
@@ -46,7 +48,7 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
 
             start = datetime.datetime.now()
             not_finished = True
-            logging.info("THETA SSH: job_id %s",job_id)
+            logging.info("[THETA]: job_id %s",job_id)
             assert job_id is not None
             while not_finished:
                 command = f"ssh thetagpusn1 qstat -u dgovoni | grep {job_id}"
@@ -54,13 +56,12 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
                 for line in stdout.read().splitlines():
                     if str(line).find("exiting") > -1:
                         not_finished = False
+                        logging.info(f"[THETA]: Job {job_id} has now completed.")
                 
                 now = datetime.datetime.now()
                 if now - start > datetime.timedelta(minutes=t):
                     not_finished = False
                 time.sleep(1)
-
-            self._ssh.close()
 
             return "thetagpu" + str(data)
 
