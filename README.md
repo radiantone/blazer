@@ -12,6 +12,8 @@ $ pip install blazer
 
 From clone
 ```bash
+$ git clone https://github.com/radiantone/blazer
+$ cd blazer
 $ python3 -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install -r requirements.txt
