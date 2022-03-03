@@ -23,14 +23,18 @@ def dovectors():
     return duration
 
 with blazer.begin(gpu=True):  # on-fabric MPI scheduler
+    logging.info(f"[{host}][{rank}] Entered MPI context")
     # Behind the scenes, the blazer on-fabric scheduler will
     # ensure the gpu context below blocks until a gpu is free.
     # It will allow gpu contexts to run as others release the gpu
     logging.info(f"[{host}][{rank}] Waiting on GPU context")
     with blazer.gpu() as gpu:  # on-metal GPU scheduler
-        logging.info(f"[{host}][{rank}] Got GPU context")
+        logging.info(f"   [{host}][{rank}] Got GPU context")
         if gpu:
-            logging.info(f"[{host}][{rank}] Got GPU: {gpu}")
+            logging.info(f"   [{host}][{rank}] Got GPU: {gpu}")
             #print(dovectors())
+    logging.info(f"   [{host}][{rank}] Exiting GPU context")
+
+logging.info(f"[{host}][{rank}] Exiting MPI context")
 
 

@@ -8,7 +8,7 @@ from multiprocessing import Condition
 
 
 def handle_request(gpu_queue, requests, gpu_request):
-    logging.info("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
+    logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
 
     if type(gpu_request) is dict:
         destination = gpu_request['rank']
@@ -17,14 +17,14 @@ def handle_request(gpu_queue, requests, gpu_request):
         destination = parts[2]
 
     if destination:
-        logging.info("Master sending GPU allocation to rank[%s] queue size %s",int(destination), gpu_queue.qsize())
+        logging.debug("Master sending GPU allocation to rank[%s] queue size %s",int(destination), gpu_queue.qsize())
         try:
             gpu = gpu_queue.get(block=False)
             if gpu:
-                logging.info("Master Got GPU from QUEUE %s", gpu)
+                logging.debug("Master Got GPU from QUEUE %s", gpu)
                 comm.send(gpu, dest=int(destination), tag=1)
         except:
-            logging.info("Master storing GPU request for rank[%s] queue size %s",int(destination), gpu_queue.qsize())
+            logging.debug("Master storing GPU request for rank[%s] queue size %s",int(destination), gpu_queue.qsize())
             requests.put(gpu_request)
 
 
@@ -40,7 +40,7 @@ class gpu:
     total_released = 0
 
     def __init__(self, *args, **kwargs): 
-        logging.info("[%s][%s] GPU Context init %s",host,rank,kwargs)
+        logging.debug("[%s][%s] GPU Context init %s",host,rank,kwargs)
         self.kwargs = kwargs
 
         for gpu in self.gpus:
@@ -48,19 +48,19 @@ class gpu:
 
         
     def __enter__(self, *args, **kwargs): 
-        logging.info("[%s][%s] GPU Context enter",host,rank)
+        logging.debug("[%s][%s] GPU Context enter",host,rank)
         while True:
             if rank == 0:
-                logging.info("[%s][%s] Master waiting on gpu request from rank", host, rank)
-                logging.info("Master requests %s", self.requests.qsize())
-                logging.info("total_released %s size %s",self.total_released, size-1)
+                logging.debug("[%s][%s] Master waiting on gpu request from rank", host, rank)
+                logging.debug("Master requests %s", self.requests.qsize())
+                logging.debug("total_released %s size %s",self.total_released, size-1)
                 
                 if self.total_released == size-1:
-                    logging.info("MASTER IS BREAKING")
+                    logging.debug("MASTER IS BREAKING")
                     break
 
                 gpu_request = comm.recv(tag=1)
-                logging.info("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
+                logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
                 destination = None
                 
                 if type(gpu_request) is dict and 'release' in gpu_request:
@@ -71,10 +71,10 @@ class gpu:
                     finally:
                         self.lock.release()
 
-                    logging.info("[%s][%s] Release GPU %s", host, rank,gpu_request)
+                    logging.debug("[%s][%s] Release GPU %s", host, rank,gpu_request)
                     try:
                         request = self.requests.get(block=False)
-                        logging.info("Got REQUEST %s",request)
+                        logging.debug("Got REQUEST %s",request)
                     except:
                         request = None
 
@@ -83,27 +83,25 @@ class gpu:
                         handle_request(self.gpu_queue,  self.requests, request)
                 else:
                     if gpu_request == "break":
-                        logging.info("MASTER IS BREAKING")
+                        logging.debug("MASTER IS BREAKING")
                         break
 
                     handle_request(self.gpu_queue, self.requests, gpu_request)
                 
             else:
-                logging.info("[%s][%s] Sending gpu request",host,rank)
+                logging.debug("[%s][%s] Sending gpu request",host,rank)
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
-                logging.info("[%s][%s] Waiting for gpu",host,rank)
+                logging.debug("[%s][%s] Waiting for gpu",host,rank)
                 self.using_gpu = gpu = comm.recv(source=0, tag=1)
-                logging.info("[%s][%s] Allocating GPU[%s]",host,rank, gpu)
+                logging.debug("[%s][%s] Allocating GPU[%s]",host,rank, gpu)
                 return gpu
 
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # notify master of releasing this gpu
-        logging.info("[%s][%s] GPU Context exit",host,rank)
+        logging.debug("[%s][%s] GPU Context exit",host,rank)
         if rank != 0:
             self.using_gpu['release'] = True
             self.using_gpu['rank'] = rank
             comm.send(self.using_gpu, dest=0, tag=1)
-            logging.info("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
-        #else:
-        #    comm.send("break", dest=0, tag=1)
+            logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
