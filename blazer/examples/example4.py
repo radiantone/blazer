@@ -1,3 +1,9 @@
+import logging
+
+logging.basicConfig(
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
+)
+
 import blazer
 from blazer.hpc.mpi.primitives import host
 import numpy as np

@@ -4,7 +4,7 @@ the needed behavior """
 import logging
 
 logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
 )
 from typing import List, Any, Callable
 from mpi4py import MPI
@@ -59,7 +59,7 @@ def stop():
     if rank == 0:
         logging.debug("Sending break to all ranks")
         for i in range(1, size):
-           comm.send("break", dest=i)
+           comm.send("break", tag=0, dest=i)
         logging.debug("Waiting on barrier")
         comm.Barrier()
         logging.debug("Barrier complete")
@@ -69,7 +69,7 @@ if rank != 0:
     def run():
         while loop:
             logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
-            defer = comm.recv(source=0)
+            defer = comm.recv(source=0, tag=0)
             logging.debug("[%s] thread rank %s got data %s", host, rank, defer)
             if type(defer) is str and defer == "break":
                 logging.debug("Rank %s stopping", rank)
@@ -78,7 +78,7 @@ if rank != 0:
             logging.debug("[%s] thread rank %s got defer",host,  defer)
             result = defer()
             logging.debug("[%s] thread rank %s sending result %s",host,  rank, result)
-            comm.send(result, dest=0)
+            comm.send(result, tag=0, dest=0)
         logging.debug(f"{host} Rank {rank} notifying Barrier")
         comm.Barrier()
 
@@ -105,7 +105,7 @@ def parallel(defers: List, *args):
         for defer in defers:
             if last_result is None:
                 logging.debug("[%s] parallel Sending defer %s to rank %s NO ARGS",host,  defer, dest_rank)
-                comm.send(dill.dumps(defer), dest=dest_rank)
+                comm.send(dill.dumps(defer), tag=0, dest=dest_rank)
             else:
                 logging.debug("[%s] parallel Sending defer %s to rank %s %s",host,  defer, dest_rank, last_result)
                 fname = None
@@ -132,7 +132,7 @@ def parallel(defers: List, *args):
                     logging.debug("[%s] PARALLEL %s EXECUTING DONE %s",host,  fname, last_result)
                     continue
                 else:
-                    comm.send(dill.dumps(partial(defer, *last_result)), dest=dest_rank)
+                    comm.send(dill.dumps(partial(defer, *last_result)), tag=0, dest=dest_rank)
 
             # Cycle destination rank over available nodes
             dest_rank += 1
@@ -143,7 +143,7 @@ def parallel(defers: List, *args):
         results = []
         for i in range(0, l):
             logging.debug("[%s] parallel Master Waiting on result", host)
-            last_result = comm.recv()
+            last_result = comm.recv(tag=0)
             logging.debug("[%s] parallel Master Got result %s", host, last_result)
             results += [last_result]
 
@@ -258,7 +258,7 @@ def pipeline(defers: List, *args):
         for defer in defers:
             if last_result is None:
                 logging.debug("[%s] Pipeline Sending defer to rank %s NO ARGS", host, dest_rank)
-                comm.send(dill.dumps(defer), dest=dest_rank)
+                comm.send(dill.dumps(defer), tag=0, dest=dest_rank)
             else:
                 logging.debug("Pipeline Sending defer %s to rank %s %s", defer, dest_rank, last_result)
                 fname = None
@@ -281,7 +281,7 @@ def pipeline(defers: List, *args):
                     last_result = defer(last_result)
                     continue
                 else:
-                    comm.send(dill.dumps(partial(defer, last_result)), dest=dest_rank)
+                    comm.send(dill.dumps(partial(defer, last_result)), tag=0, dest=dest_rank)
 
             dest_rank += 1
 
@@ -289,7 +289,7 @@ def pipeline(defers: List, *args):
                 dest_rank = 1
 
             logging.debug("Pipeline Master Waiting on result")
-            last_result = comm.recv()
+            last_result = comm.recv(tag=0)
             logging.debug("Pipeline Master Got result %s", last_result)
 
         return last_result
