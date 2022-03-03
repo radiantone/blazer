@@ -191,6 +191,60 @@ In addition there are other primitives to help manipulate lists of tasks or data
 - **where** - Filter a list of tasks or data elements based on a function or lambda
 - **select** - Apply a function to each list element and return the result
 
+#### Context Handlers
+
+Blazer uses convenient context handlers to control blocks of code that need to be scheduled to MPI processes behind the scenes.
+There are two types of context handlers currently. 
+
+`blazer.begin()` is a mandatory context that enables the MPI scheduler behind the various primitives to operate correctly.
+
+```python
+
+import blazer
+
+blazer.begin():
+    def get_data():
+        """ Data generator """
+        for i in range(0, (size * 2)):
+            yield i
+
+    result = scatter(get_data(), calc_some)
+    blazer.print("SCATTER:", result)
+
+```
+
+`blazer.gpu()` is a context that requests (from the invisible MPI scheduler) dedicated access to a specific GPU on your MPI node fabric.
+
+```python
+import logging
+import blazer
+import numpy as np
+
+from blazer.hpc.mpi.primitives import host, rank
+from numba import vectorize
+from timeit import default_timer as timer
+
+def dovectors():
+
+    @vectorize(['float32(float32, float32)'], target='cuda')
+    def dopow(a, b):
+        return a ** b
+
+    vec_size = 100
+
+    a = b = np.array(np.random.sample(vec_size), dtype=np.float32)
+    c = np.zeros(vec_size, dtype=np.float32)
+
+    start = timer()
+    dopow(a, b)
+    duration = timer() - start
+    return duration
+
+with blazer.begin(gpu=True):  # on-fabric MPI scheduler
+    with blazer.gpu() as gpu:  # on-metal GPU scheduler
+        # gpu object contains metadata about the GPU assigned
+        print(dovectors())
+```
 
 ### Cross-Cluster Supercomputing
 
