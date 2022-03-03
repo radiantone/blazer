@@ -1,0 +1,32 @@
+import blazer
+from blazer.hpc.mpi.primitives import host
+import numpy as np
+from numba import vectorize
+from timeit import default_timer as timer
+
+def dovectors():
+
+    @vectorize(['float32(float32, float32)'], target='cuda')
+    def dopow(a, b):
+        return a ** b
+
+    vec_size = 100
+
+    a = b = np.array(np.random.sample(vec_size), dtype=np.float32)
+    c = np.zeros(vec_size, dtype=np.float32)
+
+    start = timer()
+    dopow(a, b)
+    duration = timer() - start
+    return duration
+
+with blazer.begin():  # on-fabric MPI scheduler
+    # Behind the scenes, the blazer on-fabric scheduler will
+    # ensure the gpu context below blocks until a gpu is free.
+    # It will allow gpu contexts to run as others release the gpu
+
+    print(f"[{host}] Waiting on GPU context")
+    with blazer.gpu() as gpu:  # on-metal GPU scheduler
+        print(f"[{host}] Got GPU context: {gpu}")
+
+
