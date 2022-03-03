@@ -21,14 +21,14 @@ import dill
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
-host= MPI.Get_processor_name()
+host = MPI.Get_processor_name()
 
 global loop
 loop = True
 
 MASTER = rank == 0
 
-logging.debug(f"MY {host} RANK {rank} and size {size}")
+logging.debug(f"ME: {host} RANK {rank} and procs {size}")
 
 
 @contextmanager
@@ -68,18 +68,18 @@ def stop():
 if rank != 0:
     def run():
         while loop:
-            logging.debug("thread rank %s waiting on defer", rank)
+            logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
             defer = comm.recv(source=0)
-            logging.debug("thread rank %s got data %s", rank, defer)
+            logging.debug("[%s] thread rank %s got data %s", host, rank, defer)
             if type(defer) is str and defer == "break":
                 logging.debug("Rank %s stopping", rank)
                 break
             defer = dill.loads(defer)
-            logging.debug("thread rank %s got defer", defer)
+            logging.debug("[%s] thread rank %s got defer",host,  defer)
             result = defer()
-            logging.debug("thread rank %s sending result %s", rank, result)
+            logging.debug("[%s] thread rank %s sending result %s",host,  rank, result)
             comm.send(result, dest=0)
-        logging.debug(f"Rank {rank} notifying Barrier")
+        logging.debug(f"{host} Rank {rank} notifying Barrier")
         comm.Barrier()
 
 
@@ -90,7 +90,7 @@ if rank != 0:
 def parallel(defers: List, *args):
     """ This will use the master node 0 scheduler to scatter/gather results """
     _rank = 1
-    logging.debug("parallel rank %s %s", rank, args)
+    logging.debug("[%s] parallel rank %s %s",host,  rank, args)
     l = len(defers)
 
     if rank == 0:
@@ -104,10 +104,10 @@ def parallel(defers: List, *args):
         # Send all functions to other ranks to execute in parallel
         for defer in defers:
             if last_result is None:
-                logging.debug("parallel Sending defer %s to rank %s NO ARGS", defer, dest_rank)
+                logging.debug("[%s] parallel Sending defer %s to rank %s NO ARGS",host,  defer, dest_rank)
                 comm.send(dill.dumps(defer), dest=dest_rank)
             else:
-                logging.debug("parallel Sending defer %s to rank %s %s", defer, dest_rank, last_result)
+                logging.debug("[%s] parallel Sending defer %s to rank %s %s",host,  defer, dest_rank, last_result)
                 fname = None
                 if type(defer) is partial:
                     fname = defer.func.__name__
@@ -125,11 +125,11 @@ def parallel(defers: List, *args):
 
                 logging.debug("FNAME %s", fname)
                 if fname in ['parallel', 'pipeline']:
-                    logging.debug("PARALLEL EXECUTING %s %s", defer, last_result)
+                    logging.debug("[%s] PARALLEL EXECUTING %s %s",host,  defer, last_result)
                     # Just execute the parallel since I am already at rank 0
                     last_result = defer(*last_result)
                     l = l - 1
-                    logging.debug("PARALLEL %s EXECUTING DONE %s", fname, last_result)
+                    logging.debug("[%s] PARALLEL %s EXECUTING DONE %s",host,  fname, last_result)
                     continue
                 else:
                     comm.send(dill.dumps(partial(defer, *last_result)), dest=dest_rank)
@@ -142,12 +142,12 @@ def parallel(defers: List, *args):
         # After all functions are sent and being executed, get results over MPI comm
         results = []
         for i in range(0, l):
-            logging.debug("parallel Master Waiting on result")
+            logging.debug("[%s] parallel Master Waiting on result", host)
             last_result = comm.recv()
-            logging.debug("parallel Master Got result %s", last_result)
+            logging.debug("[%s] parallel Master Got result %s", host, last_result)
             results += [last_result]
 
-        logging.debug("parallel return results %s", results)
+        logging.debug("[%s] parallel return results %s", host, results)
         return results
 
 
@@ -167,6 +167,7 @@ def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
         _chunks = np.array_split(data, size)
     else:
         _chunks = None
+
     data = comm.scatter(_chunks, root=0)
 
     listdata = data.tolist()
@@ -176,7 +177,7 @@ def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
     results += [newData]
     _flattened = flatten(results)
     if None not in _flattened:
-        logging.info("REDUCE: %s",_flattened)
+        logging.info("[%s] REDUCE: %s",host, _flattened)
         _data = _reduce(_flattened)
         if require_list and type(_data) is list:
             mapreduce(_map, _reduce, _data)
@@ -237,7 +238,7 @@ def scatter(data: Any, func: Callable):
 
         data = comm.scatter(chunk, root=0)
         _data = func(data)
-        logging.debug("scatter[%s, %s]: Chunk %s %s, Func is %s Data is %s Result is %s", rank,host,i, chunk, func, data, _data)
+        logging.debug("[%s] scatter[%s, %s]: Chunk %s %s, Func is %s Data is %s Result is %s", host, rank,host,i, chunk, func, data, _data)
         newData = comm.gather(_data, root=0)
         results += [newData]
 
@@ -256,7 +257,7 @@ def pipeline(defers: List, *args):
 
         for defer in defers:
             if last_result is None:
-                logging.debug("Pipeline Sending defer to rank %s NO ARGS", dest_rank)
+                logging.debug("[%s] Pipeline Sending defer to rank %s NO ARGS", host, dest_rank)
                 comm.send(dill.dumps(defer), dest=dest_rank)
             else:
                 logging.debug("Pipeline Sending defer %s to rank %s %s", defer, dest_rank, last_result)
