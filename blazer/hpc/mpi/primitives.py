@@ -30,9 +30,43 @@ MASTER = rank == 0
 
 logging.debug(f"ME: {host} RANK {rank} and procs {size}")
 
+class begin: 
+    
+    def __init__(self, *args, **kwargs): 
+        logging.debug("[%s][%s] Context init %s",host,rank,kwargs)
+        self.kwargs = kwargs
+            
+    def __enter__(self, *args, **kwargs): 
+        logging.debug("[%s][%s] Context enter",host,rank)
+        if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
+            yield comm
+        else:
+            try:
+                yield comm
+            finally:
+                logging.debug("[%s][%s] Invoking stop",host,rank)
+                if rank == 0:
+                    if 'stop' in kwargs and kwargs['stop']:
+                        stop()
+                    elif 'stop' not in kwargs:
+                        stop()
+            
+
+    def __exit__(self, exc_type, exc_value, exc_traceback): 
+        #if 'gpu' in self.kwargs and self.kwargs['gpu']:
+        logging.debug("[%s][%s] Context exiting %s",host,rank,self.kwargs)
+        if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
+        #if rank != 0:
+            comm.send(f"context:end:{rank}", dest=0, tag=2)
+            logging.debug("[%s][%s] Sending break to master",host,rank)
+            comm.send("break", dest=0, tag=2)  
+            comm.Barrier()
+            logging.debug("[%s][%s] Sent break to master",host,rank)
+        elif rank == 0:
+            stop()
 
 @contextmanager
-def begin(*args, **kwds):
+def begin2(*args, **kwds):
     try:
         logging.debug("Yielding comm")
         yield comm
@@ -62,6 +96,10 @@ def stop():
            comm.send("break", tag=0, dest=i)
         logging.debug("Waiting on barrier")
         comm.Barrier()
+        logging.debug("Sending breaks")
+        comm.send("break", dest=0, tag=2)
+        comm.send("break", dest=0, tag=0)
+        logging.debug("Sent breaks")
         logging.debug("Barrier complete")
 
 
@@ -70,10 +108,16 @@ if rank != 0:
         while loop:
             logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
             defer = comm.recv(source=0, tag=0)
+            logging.debug("[%s] thread rank %s got defer",host,  rank)
             logging.debug("[%s] thread rank %s got data %s", host, rank, defer)
+            if defer == "context:end":
+                comm.send("ok", tag=0, dest=0)
+                break
+
             if type(defer) is str and defer == "break":
                 logging.debug("Rank %s stopping", rank)
                 break
+            
             defer = dill.loads(defer)
             logging.debug("[%s] thread rank %s got defer",host,  defer)
             result = defer()
@@ -82,15 +126,32 @@ if rank != 0:
         logging.debug(f"{host} Rank {rank} notifying Barrier")
         comm.Barrier()
 
-
+    thread = Thread(target=run)
+    thread.start()
+else:
+    def run():
+        while loop:
+            logging.debug("Master waiting on context or break")
+            context = comm.recv(tag=2)
+            logging.debug("Master got context message %s",context)
+            if context.find("context") == 0:
+                parts = context.split(":")
+                logging.debug("[%s] Master ending context for %s",rank, parts[2])
+                comm.send("context:end", dest=int(parts[2]))
+                stop()
+                break
+            if context == "break":
+                logging.debug("Master breaking")
+                break
+            
+        logging.debug("Master monitor loop ended")
     thread = Thread(target=run)
     thread.start()
 
 
 def parallel(defers: List, *args):
     """ This will use the master node 0 scheduler to scatter/gather results """
-    _rank = 1
-    logging.debug("[%s] parallel rank %s %s",host,  rank, args)
+    logging.debug("[%s] parallel rank %s %s",host, rank, args)
     l = len(defers)
 
     if rank == 0:
@@ -171,13 +232,13 @@ def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
     data = comm.scatter(_chunks, root=0)
 
     listdata = data.tolist()
-    logging.info("MAP: %s",listdata)
+    logging.debug("MAP: %s",listdata)
     _data = _map(listdata)
     newData = comm.gather(_data, root=0)
     results += [newData]
     _flattened = flatten(results)
     if None not in _flattened:
-        logging.info("[%s] REDUCE: %s",host, _flattened)
+        logging.debug("[%s] REDUCE: %s",host, _flattened)
         _data = _reduce(_flattened)
         if require_list and type(_data) is list:
             mapreduce(_map, _reduce, _data)

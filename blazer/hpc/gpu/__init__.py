@@ -9,12 +9,16 @@ if rank == 0:
 @contextmanager
 def gpu(*args, **kwds):
     try:
-        logging.debug("[%s] Waiting on gpu from master", host)
-        while True:
-            lock = comm.recv(source=0, tag=1)
-            if lock.find("gpu") == 0:
-                gpu = lock.split(":")[1]
-                logging.debug("[%s] Allocating GPU[%s]",host, gpu)
-                yield gpu
+        if rank != 0:
+            logging.debug("[%s][%s] Waiting on gpu from master", host, rank)
+            while True:
+                lock = comm.recv(source=0, tag=1)
+                if lock.find("gpu") == 0:
+                    gpu = lock.split(":")[1]
+                    logging.debug("[%s][%s] Allocating GPU[%s]",host,rank, gpu)
+                    yield gpu
+                    break
+        else:
+            yield
     finally:
-        logging.debug("[%s] Returning from gpu context",host)
+        logging.debug("[%s][%s] Returning from gpu context",host, rank)

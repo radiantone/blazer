@@ -1,11 +1,5 @@
-import logging
-
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
-)
-
 import blazer
-from blazer.hpc.mpi.primitives import host
+from blazer.hpc.mpi.primitives import host, rank
 import numpy as np
 from numba import vectorize
 from timeit import default_timer as timer
@@ -26,13 +20,13 @@ def dovectors():
     duration = timer() - start
     return duration
 
-with blazer.begin():  # on-fabric MPI scheduler
+with blazer.begin(gpu=True):  # on-fabric MPI scheduler
     # Behind the scenes, the blazer on-fabric scheduler will
     # ensure the gpu context below blocks until a gpu is free.
     # It will allow gpu contexts to run as others release the gpu
 
-    print(f"[{host}] Waiting on GPU context")
+    print(f"[{host}][{rank}] Waiting on GPU context")
     with blazer.gpu() as gpu:  # on-metal GPU scheduler
-        print(f"[{host}] Got GPU context: {gpu}")
+        print(f"[{host}][{rank}] Got GPU context: {gpu}")
 
 

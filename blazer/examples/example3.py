@@ -10,7 +10,7 @@ def add(x, y=0):
     return x + y
 
 
-with blazer.begin():
+with blazer.begin2():
     result = map(sqr, list(range(0, 100)))
 
     blazer.print(result)
