@@ -27,6 +27,8 @@ with blazer.begin(gpu=True):  # on-fabric MPI scheduler
 
     print(f"[{host}][{rank}] Waiting on GPU context")
     with blazer.gpu() as gpu:  # on-metal GPU scheduler
-        print(f"[{host}][{rank}] Got GPU context: {gpu}")
+        if gpu:
+            print(f"[{host}][{rank}] Got GPU context: {gpu}")
+            print(dovectors())
 
 
