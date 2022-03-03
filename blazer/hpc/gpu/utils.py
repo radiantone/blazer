@@ -87,12 +87,12 @@ def main():
     if result != CUDA_SUCCESS:
         cuda.cuGetErrorString(result, ctypes.byref(error_str))
         logging.debug("cuInit failed with error code %d: %s" % (result, error_str.value.decode()))
-        return 1
+        raise
     result = cuda.cuDeviceGetCount(ctypes.byref(nGpus))
     if result != CUDA_SUCCESS:
         cuda.cuGetErrorString(result, ctypes.byref(error_str))
         logging.debug("cuDeviceGetCount failed with error code %d: %s" % (result, error_str.value.decode()))
-        return 1
+        raise
     logging.debug("Found %d device(s)." % nGpus.value)
     for i in range(nGpus.value):
         gpu = {}
@@ -100,7 +100,7 @@ def main():
         if result != CUDA_SUCCESS:
             cuda.cuGetErrorString(result, ctypes.byref(error_str))
             logging.debug("cuDeviceGet failed with error code %d: %s" % (result, error_str.value.decode()))
-            return 1
+            raise
         logging.debug("Device: %d" % i)
         gpu['id'] = i
         if cuda.cuDeviceGetName(ctypes.c_char_p(name), len(name), device) == CUDA_SUCCESS:

@@ -65,20 +65,6 @@ class begin:
         elif rank == 0:
             stop()
 
-@contextmanager
-def begin2(*args, **kwds):
-    try:
-        logging.debug("Yielding comm")
-        yield comm
-    finally:
-        logging.debug("Invoking stop(%s)",rank)
-        if rank == 0:
-            logging.debug("kwds %s", kwds)
-            if 'stop' in kwds and kwds['stop']:
-                stop()
-            elif 'stop' not in kwds:
-                stop()
-
 
 def mprint(*args):
     if rank == 0:

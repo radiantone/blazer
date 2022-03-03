@@ -1,5 +1,5 @@
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
+from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, rank, size
 
 
 def calc_some(value, *args):
