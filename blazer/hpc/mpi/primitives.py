@@ -59,9 +59,9 @@ class begin:
             comm.send(f"context:end:{rank}", dest=0, tag=2)
             if rank != 0:
                 logging.debug("[%s][%s] Sending break to master 1",host,rank)
-                #comm.send("break", dest=0, tag=1)  
+                comm.send("break", dest=0, tag=1)  
                 logging.debug("[%s][%s] Sending break to master 2",host,rank)
-                #comm.send("break", dest=0, tag=2)  
+                comm.send("break", dest=0, tag=2)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
                 if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
                     pass
