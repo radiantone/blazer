@@ -95,7 +95,7 @@ def stop(barrier=True):
         if barrier:
             comm.Barrier()
         logging.debug("Sending breaks: tag=2")
-        #comm.send("break", dest=0, tag=2)
+        comm.send("break", dest=0, tag=2)
         #logging.debug("Sending breaks: tag=0")
         #comm.send("break", dest=0, tag=0)
         #logging.debug("Sending breaks: tag=1")
