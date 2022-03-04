@@ -61,9 +61,13 @@ class begin:
                 logging.debug("[%s][%s] Sending break to master",host,rank)
                 comm.send("break", dest=0, tag=2)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
-                comm.Barrier()
+
+                # TODO: This line seems to work or break depending on mpi implementation
+
                 logging.debug("[%s][%s] Past barrier",host,rank)
                 logging.debug("[%s][%s] Sent break to master",host,rank)
+            
+            comm.Barrier()
         elif rank == 0:
             stop()
 
