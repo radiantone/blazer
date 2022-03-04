@@ -69,7 +69,7 @@ class begin:
         elif rank == 0:
             logging.debug("[%s][%s] Master STOPPING",host,rank)
             stop()
-
+            comm.Barrier()
 
 def mprint(*args):
     """ Print output if on master node """
