@@ -61,7 +61,7 @@ class begin:
                 logging.debug("[%s][%s] Sending break to master",host,rank)
                 comm.send("break", dest=0, tag=2)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
-                #comm.Barrier()
+                comm.Barrier()
                 logging.debug("[%s][%s] Past barrier",host,rank)
                 logging.debug("[%s][%s] Sent break to master",host,rank)
         elif rank == 0:
