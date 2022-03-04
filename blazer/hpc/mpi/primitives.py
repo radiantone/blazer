@@ -61,7 +61,7 @@ class begin:
                 logging.debug("[%s][%s] Sending break to master",host,rank)
                 comm.send("break", dest=0, tag=1)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
-                comm.Barrier()
+                #comm.Barrier()
                 # TODO: This line seems to work or break depending on mpi implementation
 
                 logging.debug("[%s][%s] Past barrier",host,rank)
@@ -78,7 +78,7 @@ def mprint(*args):
         print(*args)
 
 
-def stop():
+def stop(barrier=True):
     """ Stop all workers """
 
     logging.debug("Stopping %s, %s", rank,host)
@@ -88,7 +88,8 @@ def stop():
             logging.debug(f"Master sending break to rank {i}")
             comm.send("break", tag=0, dest=i)
         logging.debug("Waiting on barrier")
-        comm.Barrier()
+        if barrier:
+            comm.Barrier()
         logging.debug("Sending breaks: tag=2")
         comm.send("break", dest=0, tag=2)
         #logging.debug("Sending breaks: tag=0")
