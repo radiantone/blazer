@@ -54,13 +54,16 @@ class begin:
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         logging.debug("[%s][%s] Context exiting %s",host,rank,self.kwargs)
-        
+
         if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
             comm.send(f"context:end:{rank}", dest=0, tag=2)
-            logging.debug("[%s][%s] Sending break to master",host,rank)
-            comm.send("break", dest=0, tag=2)  
-            comm.Barrier()
-            logging.debug("[%s][%s] Sent break to master",host,rank)
+            if rank != 0:
+                logging.debug("[%s][%s] Sending break to master",host,rank)
+                comm.send("break", dest=0, tag=2)  
+                logging.debug("[%s][%s] Waiting on barrier",host,rank)
+                #comm.Barrier()
+                logging.debug("[%s][%s] Past barrier",host,rank)
+                logging.debug("[%s][%s] Sent break to master",host,rank)
         elif rank == 0:
             stop()
 
@@ -73,18 +76,19 @@ def mprint(*args):
 
 def stop():
     """ Stop all workers """
-    global loop
 
     logging.debug("Stopping %s, %s", rank,host)
     if rank == 0:
         logging.debug("Sending break to all ranks")
         for i in range(1, size):
-           comm.send("break", tag=0, dest=i)
+            logging.debug(f"Master sending break to rank {i}")
+            comm.send("break", tag=0, dest=i)
         logging.debug("Waiting on barrier")
         comm.Barrier()
         logging.debug("Sending breaks")
         comm.send("break", dest=0, tag=2)
         comm.send("break", dest=0, tag=0)
+        comm.send("break", dest=0, tag=1)
         logging.debug("Sent breaks")
         logging.debug("Barrier complete")
 
@@ -97,8 +101,14 @@ if rank != 0:
             defer = comm.recv(source=0, tag=0)
             logging.debug("[%s] thread rank %s got defer",host,  rank)
             logging.debug("[%s] thread rank %s got data %s", host, rank, defer)
+
+            if defer == "break":
+                logging.debug("[%s] thread rank %s breaking", host, rank)
+                break
+
             if defer == "context:end":
-                comm.send("ok", tag=0, dest=0)
+                logging.debug("[%s] thread rank %s context:end", host, rank)
+                #comm.send("ok", tag=0, dest=0)
                 break
 
             if type(defer) is str and defer == "break":
@@ -113,6 +123,8 @@ if rank != 0:
         logging.debug(f"{host} Rank {rank} notifying Barrier")
         comm.Barrier()
 
+        logging.debug("[%s] thread rank [%s] message loop ending", host, rank)
+
     thread = Thread(target=run)
     thread.start()
 else:
@@ -126,8 +138,11 @@ else:
             if context.find("context") == 0:
                 parts = context.split(":")
                 logging.debug("[%s] Master ending context for %s",rank, parts[2])
-                comm.send("context:end", dest=int(parts[2]))
-                stop()
+                if int(parts[2]) == 0:
+                    stop()
+                else:
+                    comm.send("context:end", dest=int(parts[2]))
+                    stop()
                 break
 
             if context == "break":

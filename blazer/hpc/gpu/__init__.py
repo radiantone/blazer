@@ -76,8 +76,8 @@ class gpu:
                 logging.debug("total_released %s size %s",self.total_released, size-1)
                 
                 if self.total_released == size-1:
-                    logging.debug("MASTER IS BREAKING")
-                    break
+                    logging.debug("MASTER IS STOPPING")
+                    stop()
 
                 gpu_request = comm.recv(tag=1)
                 logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
