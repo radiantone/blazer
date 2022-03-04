@@ -86,9 +86,11 @@ class gpu:
                 if type(gpu_request) is dict and 'release' in gpu_request:
                     del gpu_request['release']
                     try:
+                        logging.debug("[%s][%s] Master acquiring lock", host, rank)
                         self.lock.acquire()
                         self.total_released += 1
                     finally:
+                        logging.debug("[%s][%s] Master releasing lock", host, rank)
                         self.lock.release()
 
                     logging.debug("[%s][%s] Release GPU %s", host, rank,gpu_request)
