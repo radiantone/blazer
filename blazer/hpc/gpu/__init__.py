@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import contextmanager
 from ..mpi.primitives import comm, rank, size, stop, host, comm
 from .utils import main
@@ -6,6 +7,23 @@ from threading import Thread
 from queue import SimpleQueue
 from multiprocessing import Condition
 from numba import cuda
+
+GPUS = []
+
+if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
+    with open(f'/var/tmp/blazer-{host}-gpulist.txt') as gpufile:
+        gpu_lines = gpufile.readlines()
+        gpus = [None] * len(gpu_lines)
+        for line in gpu_line:
+            _gpu = {}
+            parts = line.split(' ')
+            _gpu['host'] = parts[0]
+            _gpu['uuid'] = parts[-1].replace(')','')
+            _gpu['id'] = int(parts[2].replace(':',''))
+            _gpu['name'] - parts[3]
+
+            gpus[_gpu['id']] = _gpu
+        GPUS = gpus
 
 def handle_request(gpu_queue, requests, gpu_request):
     logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
@@ -49,7 +67,9 @@ class gpu:
         
     def __enter__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
+
         while True:
+
             if rank == 0:
                 logging.debug("[%s][%s] Master waiting on gpu request from rank", host, rank)
                 logging.debug("Master requests %s", self.requests.qsize())
@@ -61,7 +81,6 @@ class gpu:
 
                 gpu_request = comm.recv(tag=1)
                 logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
-                destination = None
                 
                 if type(gpu_request) is dict and 'release' in gpu_request:
                     del gpu_request['release']
@@ -102,6 +121,7 @@ class gpu:
         # notify master of releasing this gpu
         logging.debug("[%s][%s] GPU Context exit",host,rank)
         cuda.close()
+        
         if rank != 0:
             self.using_gpu['release'] = True
             self.using_gpu['rank'] = rank

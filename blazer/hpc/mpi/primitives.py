@@ -53,10 +53,9 @@ class begin:
             
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
-        #if 'gpu' in self.kwargs and self.kwargs['gpu']:
         logging.debug("[%s][%s] Context exiting %s",host,rank,self.kwargs)
+        
         if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
-        #if rank != 0:
             comm.send(f"context:end:{rank}", dest=0, tag=2)
             logging.debug("[%s][%s] Sending break to master",host,rank)
             comm.send("break", dest=0, tag=2)  
@@ -67,6 +66,7 @@ class begin:
 
 
 def mprint(*args):
+    """ Print output if on master node """
     if rank == 0:
         print(*args)
 
@@ -90,6 +90,7 @@ def stop():
 
 
 if rank != 0:
+    """ Monitor thread for (worker processes) receiving function tasks to execute """
     def run():
         while loop:
             logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
@@ -115,28 +116,32 @@ if rank != 0:
     thread = Thread(target=run)
     thread.start()
 else:
+    """ Monitor thread for Master, controlling user code context handlers """
     def run():
         while loop:
             logging.debug("Master waiting on context or break")
             context = comm.recv(tag=2)
             logging.debug("Master got context message %s",context)
+
             if context.find("context") == 0:
                 parts = context.split(":")
                 logging.debug("[%s] Master ending context for %s",rank, parts[2])
                 comm.send("context:end", dest=int(parts[2]))
                 stop()
                 break
+
             if context == "break":
                 logging.debug("Master breaking")
                 break
             
         logging.debug("Master monitor loop ended")
+
     thread = Thread(target=run)
     thread.start()
 
 
 def parallel(defers: List, *args):
-    """ This will use the master node 0 scheduler to scatter/gather results """
+    """ Run list of tasks in parallel across compute fabric """
     logging.debug("[%s] parallel rank %s %s",host, rank, args)
     l = len(defers)
 
@@ -199,6 +204,7 @@ def parallel(defers: List, *args):
 
 
 def enumrate(gen):
+    """ Alternate enumerate as a generator """
     i = 0
     for a in gen:
         yield i, a
@@ -231,6 +237,8 @@ def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
         return _data
 
 def map(func: Callable, data: Any):
+    """ Apply map function over data elements """
+    """ Runs in parallel over data """
     _funcs = []
     for arg in data:
         if iterable(arg):
@@ -245,6 +253,9 @@ def map(func: Callable, data: Any):
 
 
 def reduce(func: Callable, data: Any):
+    """ Apply reduce function over data elements """
+    """ Results cascade to next reduce function """
+    """ Runs in sequence over data """
     _funcs = []
     if data is None:
         return None
@@ -292,7 +303,7 @@ def scatter(data: Any, func: Callable):
     return flatten(results)
 
 def pipeline(defers: List, *args):
-    """ This will use the master node 0 scheduler to orchestrate results """
+    """ Run list of functions in ordered sequence, passing intermediate results on to next task """
     logging.debug("pipeline rank %s %s", rank, args)
     if rank == 0:
         dest_rank = 1
