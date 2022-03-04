@@ -69,8 +69,6 @@ class begin:
         elif rank == 0:
             logging.debug("[%s][%s] Master STOPPING",host,rank)
             stop()
-            comm.send("break", dest=0, tag=1) 
-            comm.send("break", dest=0, tag=2)  
 
 
 def mprint(*args):
