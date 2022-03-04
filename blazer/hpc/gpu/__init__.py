@@ -20,7 +20,7 @@ if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
             _gpu['host'] = parts[0]
             _gpu['uuid'] = parts[-1].replace(')','')
             _gpu['id'] = int(parts[2].replace(':',''))
-            _gpu['name'] - parts[3]
+            _gpu['name'] = parts[3]
 
             gpus[_gpu['id']] = _gpu
         GPUS = gpus
