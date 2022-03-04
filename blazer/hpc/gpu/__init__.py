@@ -5,7 +5,7 @@ from .utils import main
 from threading import Thread
 from queue import SimpleQueue
 from multiprocessing import Condition
-
+from numba import cuda
 
 def handle_request(gpu_queue, requests, gpu_request):
     logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
@@ -94,12 +94,14 @@ class gpu:
                 logging.debug("[%s][%s] Waiting for gpu",host,rank)
                 self.using_gpu = gpu = comm.recv(source=0, tag=1)
                 logging.debug("[%s][%s] Allocating GPU[%s]",host,rank, gpu)
+                cuda.select_device(gpu['id'])
                 return gpu
 
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # notify master of releasing this gpu
         logging.debug("[%s][%s] GPU Context exit",host,rank)
+        cuda.close()
         if rank != 0:
             self.using_gpu['release'] = True
             self.using_gpu['rank'] = rank
