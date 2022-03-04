@@ -58,8 +58,10 @@ class begin:
         if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
             comm.send(f"context:end:{rank}", dest=0, tag=2)
             if rank != 0:
-                logging.debug("[%s][%s] Sending break to master",host,rank)
+                logging.debug("[%s][%s] Sending break to master 1",host,rank)
                 comm.send("break", dest=0, tag=1)  
+                logging.debug("[%s][%s] Sending break to master 2",host,rank)
+                comm.send("break", dest=0, tag=2)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
                 comm.Barrier()
                 # TODO: This line seems to work or break depending on mpi implementation
@@ -130,32 +132,6 @@ if rank != 0:
         comm.Barrier()
 
         logging.debug("[%s] thread rank [%s] message loop ending", host, rank)
-
-    thread = Thread(target=run)
-    thread.start()
-else:
-    """ Monitor thread for Master, controlling user code context handlers """
-    def run():
-        while loop:
-            logging.debug("Master waiting on context or break")
-            context = comm.recv(tag=2)
-            logging.debug("Master got context message %s",context)
-
-            if context.find("context") == 0:
-                parts = context.split(":")
-                logging.debug("[%s] Master ending context for %s",rank, parts[2])
-                if int(parts[2]) == 0:
-                    stop()
-                    break
-                else:
-                    comm.send("context:end", dest=int(parts[2]))
-                    #stop()
-
-            if context == "break":
-                logging.debug("Master breaking")
-                break
-            
-        logging.debug("Master monitor loop ended")
 
     thread = Thread(target=run)
     thread.start()

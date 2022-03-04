@@ -25,6 +25,34 @@ if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
             gpus[_gpu['id']] = _gpu
         GPUS = gpus
 
+if rank == 0:
+    """ Monitor thread for Master, controlling user code context handlers """
+    def run():
+        while True:
+            logging.debug("Master waiting on context or break")
+            context = comm.recv(tag=2)
+            logging.debug("Master got context message %s",context)
+
+            if context.find("context") == 0:
+                parts = context.split(":")
+                logging.debug("[%s] Master ending context for %s",rank, parts[2])
+                if int(parts[2]) == 0:
+                    stop()
+                    break
+                else:
+                    comm.send("context:end", dest=int(parts[2]))
+                    #stop()
+
+            if context == "break":
+                logging.debug("Master breaking")
+                break
+            
+        logging.debug("Master monitor loop ended")
+
+    thread = Thread(target=run)
+    thread.start()
+
+
 def handle_request(gpu_queue, requests, gpu_request):
     logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
 
