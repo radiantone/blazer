@@ -14,7 +14,7 @@ if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
     with open(f'/var/tmp/blazer-{host}-gpulist.txt') as gpufile:
         gpu_lines = gpufile.readlines()
         gpus = [None] * len(gpu_lines)
-        for line in gpu_line:
+        for line in gpu_lines:
             _gpu = {}
             parts = line.split(' ')
             _gpu['host'] = parts[0]
@@ -121,7 +121,7 @@ class gpu:
         # notify master of releasing this gpu
         logging.debug("[%s][%s] GPU Context exit",host,rank)
         cuda.close()
-        
+
         if rank != 0:
             self.using_gpu['release'] = True
             self.using_gpu['rank'] = rank
