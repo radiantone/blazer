@@ -134,6 +134,7 @@ class gpu:
                 else:
                     if gpu_request == "break":
                         logging.debug("MASTER IS BREAKING")
+                        comm.Barrier()
                         break
 
                     handle_request(self.gpu_queue, self.requests, gpu_request)
