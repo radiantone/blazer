@@ -29,9 +29,9 @@ if rank == 0:
     """ Monitor thread for Master, controlling user code context handlers """
     def run():
         while True:
-            logging.debug("Master waiting on context or break")
+            logging.debug("[%s][%s] RECV BEFORE: Master waiting on context or break",host,rank)
             context = comm.recv(tag=2)
-            logging.debug("Master got context message %s",context)
+            logging.debug("[%s][%s] RECV AFTER: Master got context message %s",host,rank,context)
 
             if context.find("context") == 0:
                 parts = context.split(":")
@@ -43,11 +43,22 @@ if rank == 0:
                     comm.send("context:end", dest=int(parts[2]))
                     #stop()
 
+            if context == "break:barrier":
+                logging.debug("BREAKING:BARRIER: Master waiting on barrier")
+                comm.Barrier()
+                logging.debug("BREAKING:BARRIER: stop(barrier=False)")
+                #stop(barrier=False)
+                logging.debug("BREAKING:BARRIER: Master post barrier breaking")
+                break
             if context == "break":
                 logging.debug("Master breaking")
+                #stop(barrier=False)
                 break
             
         logging.debug("Master monitor loop ended")
+
+        # TODO: False works with non-gpu programs
+        # Notify workers to break and exit
 
     thread = Thread(target=run)
     thread.start()
@@ -107,8 +118,10 @@ class gpu:
                     logging.debug("MASTER IS STOPPING")
                     stop()
                     break
-
+                    
+                logging.debug("[%s][%s] RECV BEFORE tag=1",host,rank)
                 gpu_request = comm.recv(tag=1)
+                logging.debug("[%s][%s] RECV AFTER tag=1",host,rank)
                 logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
                 
                 if type(gpu_request) is dict and 'release' in gpu_request:
@@ -134,7 +147,8 @@ class gpu:
                 else:
                     if gpu_request == "break":
                         logging.debug("MASTER IS BREAKING")
-                        comm.Barrier()
+                        comm.send("break:barrier", dest=0, tag=2)
+                        #comm.send("break", dest=0, tag=1)
                         break
 
                     handle_request(self.gpu_queue, self.requests, gpu_request)
@@ -142,12 +156,14 @@ class gpu:
                 logging.debug("[%s][%s] Sending gpu request",host,rank)
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
                 logging.debug("[%s][%s] Waiting for gpu",host,rank)
+                logging.debug("[%s][%s] RECV BEFORE TAG=1,a",host,rank)
                 self.using_gpu = gpu = comm.recv(source=0, tag=1)
+                logging.debug("[%s][%s] RECV AFTER TAG=1,a",host,rank)
                 logging.debug("[%s][%s] Allocating GPU[%s]",host,rank, gpu)
                 cuda.select_device(gpu['id'])
                 return gpu
 
-        logging.debug("[%s][%s] Exiting GPU context",host,rank)
+        logging.debug("[%s][%s] Exiting GPU context: ",host,rank)
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # notify master of releasing this gpu
@@ -159,3 +175,5 @@ class gpu:
             self.using_gpu['rank'] = rank
             comm.send(self.using_gpu, dest=0, tag=1)
             logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
+        else:
+            logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)

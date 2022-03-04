@@ -63,12 +63,12 @@ class begin:
                 logging.debug("[%s][%s] Sending break to master 2",host,rank)
                 comm.send("break", dest=0, tag=2)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
-                comm.Barrier()
+                #comm.Barrier()
                 # TODO: This line seems to work or break depending on mpi implementation
 
                 logging.debug("[%s][%s] Past barrier",host,rank)
                 logging.debug("[%s][%s] Sent break to master",host,rank)
-        elif rank == 0:
+        if rank == 0:
             logging.debug("[%s][%s] Master STOPPING",host,rank)
             stop()
             #comm.Barrier()
@@ -88,15 +88,15 @@ def stop(barrier=True):
         for i in range(1, size):
             logging.debug(f"Master sending break to rank {i}")
             comm.send("break", tag=0, dest=i)
-        logging.debug("Waiting on barrier")
+        logging.debug("Master Waiting on barrier")
         if barrier:
             comm.Barrier()
         logging.debug("Sending breaks: tag=2")
         comm.send("break", dest=0, tag=2)
-        #logging.debug("Sending breaks: tag=0")
-        #comm.send("break", dest=0, tag=0)
-        #logging.debug("Sending breaks: tag=1")
-        #comm.send("break", dest=0, tag=1)
+        logging.debug("Sending breaks: tag=0")
+        comm.send("break", dest=0, tag=0)
+        logging.debug("Sending breaks: tag=1")
+        comm.send("break", dest=0, tag=1)
         logging.debug("Sent breaks")
         logging.debug("Barrier complete")
 
@@ -106,7 +106,9 @@ if rank != 0:
     def run():
         while loop:
             logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
+            logging.debug("[%s][%s] RECV BEFORE TAG=0",host,rank)
             defer = comm.recv(source=0, tag=0)
+            logging.debug("[%s][%s] RECV AFTER TAG=0",host,rank)
             logging.debug("[%s] thread rank %s got defer",host,  rank)
             logging.debug("[%s] thread rank %s got data %s", host, rank, defer)
 
@@ -192,7 +194,9 @@ def parallel(defers: List, *args):
         results = []
         for i in range(0, l):
             logging.debug("[%s] parallel Master Waiting on result", host)
+            logging.debug("[%s][%s] RECV BEFORE TAG=0",host,rank)
             last_result = comm.recv(tag=0)
+            logging.debug("[%s][%s] RECV AFTER TAG=0",host,rank)
             logging.debug("[%s] parallel Master Got result %s", host, last_result)
             results += [last_result]
 
