@@ -59,7 +59,7 @@ class begin:
             comm.send(f"context:end:{rank}", dest=0, tag=2)
             if rank != 0:
                 logging.debug("[%s][%s] Sending break to master",host,rank)
-                comm.send("break", dest=0, tag=2)  
+                comm.send("break", dest=0, tag=1)  
                 logging.debug("[%s][%s] Waiting on barrier",host,rank)
 
                 # TODO: This line seems to work or break depending on mpi implementation
