@@ -38,18 +38,18 @@ class begin:
             
     def __enter__(self, *args, **kwargs): 
         logging.debug("[%s][%s] Context enter",host,rank)
-        if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
+        #if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
+        #    yield comm
+        #else:
+        try:
             yield comm
-        else:
-            try:
-                yield comm
-            finally:
-                logging.debug("[%s][%s] Invoking stop",host,rank)
-                if rank == 0:
-                    if 'stop' in kwargs and kwargs['stop']:
-                        stop()
-                    elif 'stop' not in kwargs:
-                        stop()
+        finally:
+            logging.debug("[%s][%s] Invoking stop",host,rank)
+            if rank == 0:
+                if 'stop' in kwargs and kwargs['stop']:
+                    stop()
+                elif 'stop' not in kwargs:
+                    stop()
             
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
@@ -80,7 +80,7 @@ def mprint(*args):
 
 
 def stop(barrier=True):
-    """ Stop all workers """
+    """ Stop all workers from master """
 
     logging.debug("Stopping %s, %s", rank,host)
     if rank == 0:
@@ -88,9 +88,14 @@ def stop(barrier=True):
         for i in range(1, size):
             logging.debug(f"Master sending break to rank {i}")
             comm.send("break", tag=0, dest=i)
+
         logging.debug("Master Waiting on barrier")
+
         if barrier:
-            comm.Barrier()
+            comm.Barrier() # Master should barrier until all the workers being stopped barrier too
+
+        logging.debug("Barrier complete")
+        
         logging.debug("Sending breaks: tag=2")
         comm.send("break", dest=0, tag=2)
         logging.debug("Sending breaks: tag=0")
@@ -98,8 +103,8 @@ def stop(barrier=True):
         logging.debug("Sending breaks: tag=1")
         comm.send("break", dest=0, tag=1)
         logging.debug("Sent breaks")
-        logging.debug("Barrier complete")
 
+        logging.debug("Master STOP complete")
 
 if rank != 0:
     """ Monitor thread for (worker processes) receiving function tasks to execute """
@@ -107,12 +112,15 @@ if rank != 0:
         while loop:
             logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
             logging.debug("[%s][%s] RECV BEFORE TAG=0",host,rank)
+
+            # Listen for tasks and "break" commands from Master
             defer = comm.recv(source=0, tag=0)
+
             logging.debug("[%s][%s] RECV AFTER TAG=0",host,rank)
             logging.debug("[%s] thread rank %s got defer",host,  rank)
             logging.debug("[%s] thread rank %s got data %s", host, rank, defer)
 
-            if defer == "break":
+            if type(defer) is str and defer == "break":
                 logging.debug("[%s] thread rank %s breaking", host, rank)
                 break
 
@@ -120,16 +128,13 @@ if rank != 0:
                 logging.debug("[%s] thread rank %s context:end", host, rank)
                 #comm.send("ok", tag=0, dest=0)
                 break
-
-            if type(defer) is str and defer == "break":
-                logging.debug("Rank %s stopping", rank)
-                break
             
             defer = dill.loads(defer)
             logging.debug("[%s] thread rank %s got defer",host,  defer)
             result = defer()
             logging.debug("[%s] thread rank %s sending result %s",host,  rank, result)
             comm.send(result, tag=0, dest=0)
+
         logging.debug(f"{host} Rank {rank} notifying Barrier")
         comm.Barrier()
 
