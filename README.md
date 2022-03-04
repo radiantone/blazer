@@ -191,10 +191,12 @@ In addition there are other primitives to help manipulate lists of tasks or data
 - **where** - Filter a list of tasks or data elements based on a function or lambda
 - **select** - Apply a function to each list element and return the result
 
-#### Context Handlers
+### Context Handlers
 
 Blazer uses convenient context handlers to control blocks of code that need to be scheduled to MPI processes behind the scenes.
 There are two types of context handlers currently. 
+
+#### MPI Context Handler
 
 `blazer.begin()` is a mandatory context that enables the MPI scheduler behind the various primitives to operate correctly.
 
@@ -212,6 +214,7 @@ blazer.begin():
     blazer.print("SCATTER:", result)
 
 ```
+#### GPU Context Handler
 
 `blazer.gpu()` is a context that requests (from the invisible MPI scheduler) dedicated access to a specific GPU on your MPI node fabric.
 

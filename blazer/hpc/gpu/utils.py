@@ -84,6 +84,7 @@ def main():
     gpus = []
 
     result = cuda.cuInit(0)
+    
     if result != CUDA_SUCCESS:
         cuda.cuGetErrorString(result, ctypes.byref(error_str))
         logging.debug("cuInit failed with error code %d: %s" % (result, error_str.value.decode()))
