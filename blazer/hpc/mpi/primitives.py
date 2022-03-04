@@ -146,10 +146,10 @@ else:
                 logging.debug("[%s] Master ending context for %s",rank, parts[2])
                 if int(parts[2]) == 0:
                     stop()
+                    break
                 else:
                     comm.send("context:end", dest=int(parts[2]))
                     #stop()
-                break
 
             if context == "break":
                 logging.debug("Master breaking")
