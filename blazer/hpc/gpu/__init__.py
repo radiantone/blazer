@@ -132,9 +132,9 @@ class gpu:
                     if request:
                         handle_request(self.gpu_queue,  self.requests, request)
                 else:
-                    #if gpu_request == "break":
-                    #    logging.debug("MASTER IS BREAKING")
-                    #    break
+                    if gpu_request == "break":
+                        logging.debug("MASTER IS BREAKING")
+                        break
 
                     handle_request(self.gpu_queue, self.requests, gpu_request)
             else:
