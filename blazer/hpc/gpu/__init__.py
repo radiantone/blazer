@@ -43,7 +43,7 @@ if rank == 0:
                     comm.send("context:end", dest=int(parts[2]))
                     #stop()
 
-            if context == "break":
+            if context == "break2":
                 logging.debug("Master breaking")
                 break
             
