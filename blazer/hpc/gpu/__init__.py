@@ -107,7 +107,6 @@ class gpu:
                         break
 
                     handle_request(self.gpu_queue, self.requests, gpu_request)
-                
             else:
                 logging.debug("[%s][%s] Sending gpu request",host,rank)
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
@@ -117,6 +116,7 @@ class gpu:
                 cuda.select_device(gpu['id'])
                 return gpu
 
+        logging.debug("[%s][%s] Exiting GPU context",host,rank)
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # notify master of releasing this gpu
