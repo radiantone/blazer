@@ -16,11 +16,13 @@ class JobClass:
     def __call__(self, data, *args, **kwargs):
 
         try:
+            logging.debug("JobClass acquiring lock")
             self.thenclass.lock.acquire()
             logging.debug("Calling func %s %s %s", self.func,args, kwargs)
             self.thenclass.result = self.job(data)
             return self.thenclass
         finally:
+            logging.debug("JobClass releasing lock")
             self.thenclass.lock.release()
 
 
@@ -36,6 +38,7 @@ class ThenClass:
     def __call__(self, *args, **kwargs):
         from functools import partial
         try:
+            logging.debug("Then acquiring lock")
             self.lock.acquire()
             logging.info("%s %s %s", self.func, args, kwargs)
             p = partial(self.func, *args, **kwargs)
