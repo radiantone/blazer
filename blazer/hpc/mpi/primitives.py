@@ -46,8 +46,8 @@ class begin:
         finally:
             logging.debug("[%s][%s] Invoking stop",host,rank)
             if rank == 0:
-                if 'stop' in kwargs and kwargs['stop']:
-                    stop()
+                if 'stop' in kwargs:
+                    stop(kwargs['stop'])
                 elif 'stop' not in kwargs:
                     stop()
             
@@ -56,21 +56,28 @@ class begin:
         logging.debug("[%s][%s] Context exiting %s",host,rank,self.kwargs)
 
         if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
-            comm.send(f"context:end:{rank}", dest=0, tag=2)
+            logging.debug("[%s][%s] Context send to dest=0, tag=2 %s",host,rank,self.kwargs)
+            #comm.send(f"context:end:{rank}", dest=0, tag=2)
             if rank != 0:
                 logging.debug("[%s][%s] Sending break to master 1",host,rank)
                 comm.send("break", dest=0, tag=1)  
                 logging.debug("[%s][%s] Sending break to master 2",host,rank)
                 comm.send("break", dest=0, tag=2)  
-                logging.debug("[%s][%s] Waiting on barrier",host,rank)
+                comm.send("break", dest=0, tag=0)  
+                #logging.debug("[%s][%s] Waiting on barrier",host,rank)
                 #comm.Barrier()
                 # TODO: This line seems to work or break depending on mpi implementation
 
-                logging.debug("[%s][%s] Past barrier",host,rank)
+                #logging.debug("[%s][%s] Past barrier",host,rank)
                 logging.debug("[%s][%s] Sent break to master",host,rank)
         if rank == 0:
             logging.debug("[%s][%s] Master STOPPING",host,rank)
-            stop()
+            if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
+               logging.debug("[%s][%s] Master STOPPING barrier=False",host,rank)
+               stop(barrier=True,gpu=True)
+            else:
+               logging.debug("[%s][%s] Master STOPPING barrier=True",host,rank)
+               stop()
             #comm.Barrier()
 
 def mprint(*args):
@@ -79,7 +86,7 @@ def mprint(*args):
         print(*args)
 
 
-def stop(barrier=True):
+def stop(barrier=True,gpu=False):
     """ Stop all workers from master """
 
     logging.debug("Stopping %s, %s", rank,host)
@@ -89,20 +96,19 @@ def stop(barrier=True):
             logging.debug(f"Master sending break to rank {i}")
             comm.send("break", tag=0, dest=i)
 
-        logging.debug("Master Waiting on barrier")
-
         if barrier:
+            logging.debug("Master Waiting on barrier")
             comm.Barrier() # Master should barrier until all the workers being stopped barrier too
-
-        logging.debug("Barrier complete")
-        
-        logging.debug("Sending breaks: tag=2")
-        comm.send("break", dest=0, tag=2)
-        logging.debug("Sending breaks: tag=0")
-        comm.send("break", dest=0, tag=0)
-        logging.debug("Sending breaks: tag=1")
-        comm.send("break", dest=0, tag=1)
-        logging.debug("Sent breaks")
+            logging.debug("Barrier complete")
+            if not gpu:
+               logging.debug("Sending breaks: tag=2")
+               comm.send("break", dest=0, tag=2)
+        else:
+            logging.debug("Sending breaks: tag=0")
+            #comm.send("break", dest=0, tag=0)
+            logging.debug("Sending breaks: tag=1")
+            #comm.send("break", dest=0, tag=1)
+            logging.debug("Sent breaks")
 
         logging.debug("Master STOP complete")
 

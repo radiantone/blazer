@@ -1,4 +1,7 @@
 import logging
+logging.basicConfig(
+    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
+)
 import blazer
 import numpy as np
 
@@ -22,7 +25,7 @@ def dovectors():
     duration = timer() - start
     return duration
 
-with blazer.begin(gpu=True, stop=False):  # on-fabric MPI scheduler
+with blazer.begin(gpu=True):  # on-fabric MPI scheduler
     logging.info(f"[{host}][{rank}] Entered MPI context")
     # Behind the scenes, the blazer on-fabric scheduler will
     # ensure the gpu context below blocks until a gpu is free.

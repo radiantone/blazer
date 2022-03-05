@@ -10,20 +10,23 @@ from numba import cuda
 
 GPUS = []
 
-if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
-    with open(f'/var/tmp/blazer-{host}-gpulist.txt') as gpufile:
-        gpu_lines = gpufile.readlines()
-        gpus = [None] * len(gpu_lines)
-        for line in gpu_lines:
-            _gpu = {}
-            parts = line.split(' ')
-            _gpu['host'] = parts[0]
-            _gpu['uuid'] = parts[-1].replace(')','')
-            _gpu['id'] = int(parts[2].replace(':',''))
-            _gpu['name'] = parts[3]
+try:
+    if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
+        with open(f'/var/tmp/blazer-{host}-gpulist.txt') as gpufile:
+            gpu_lines = gpufile.readlines()
+            gpus = [None] * len(gpu_lines)
+            for line in gpu_lines:
+                _gpu = {}
+                parts = line.split(' ')
+                _gpu['host'] = parts[0]
+                _gpu['uuid'] = parts[-1].replace(')','')
+                _gpu['id'] = int(parts[2].replace(':',''))
+                _gpu['name'] = parts[3]
 
-            gpus[_gpu['id']] = _gpu
-        GPUS = gpus
+                gpus[_gpu['id']] = _gpu
+            GPUS = gpus
+except:
+    pass
 
 if rank == 0:
     """ Monitor thread for Master, controlling user code context handlers """
@@ -47,7 +50,7 @@ if rank == 0:
                 logging.debug("BREAKING:BARRIER: Master waiting on barrier")
                 comm.Barrier()
                 logging.debug("BREAKING:BARRIER: stop(barrier=False)")
-                #stop(barrier=False)
+                stop()
                 logging.debug("BREAKING:BARRIER: Master post barrier breaking")
                 break
             if context == "break":
@@ -116,8 +119,8 @@ class gpu:
                 
                 if self.total_released == size-1:
                     logging.debug("MASTER IS STOPPING")
-                    stop()
-                    break
+                    #stop()
+                    #break
                     
                 logging.debug("[%s][%s] RECV BEFORE tag=1",host,rank)
                 gpu_request = comm.recv(tag=1)
@@ -146,8 +149,9 @@ class gpu:
                         handle_request(self.gpu_queue,  self.requests, request)
                 else:
                     if gpu_request == "break":
-                        logging.debug("MASTER IS BREAKING")
-                        comm.send("break:barrier", dest=0, tag=2)
+                        logging.debug("[%s][%s] MASTER IS BREAKING",host,rank)
+                        #comm.send("break:barrier", dest=0, tag=2)
+                        logging.debug("[%s][%s] MASTER sent break:barrier",host,rank)
                         #comm.send("break", dest=0, tag=1)
                         break
 
@@ -173,6 +177,7 @@ class gpu:
         if rank != 0:
             self.using_gpu['release'] = True
             self.using_gpu['rank'] = rank
+            logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
             comm.send(self.using_gpu, dest=0, tag=1)
             logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
         else:
