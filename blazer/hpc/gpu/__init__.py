@@ -11,15 +11,15 @@ from numba import cuda
 GPUS = []
 
 try:
-    if os.path.exists(f'/var/tmp/blazer-{host}-gpulist.txt'):
-        with open(f'/var/tmp/blazer-{host}-gpulist.txt') as gpufile:
+    if os.path.exists(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt'):
+        with open(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt') as gpufile:
             gpu_lines = gpufile.readlines()
             gpus = [None] * len(gpu_lines)
             for line in gpu_lines:
                 _gpu = {}
                 parts = line.split(' ')
                 _gpu['host'] = parts[0]
-                _gpu['uuid'] = parts[-1].replace(')','')
+                _gpu['uuid'] = parts[-1].replace(')','').strip()
                 _gpu['id'] = int(parts[2].replace(':',''))
                 _gpu['name'] = parts[3]
 
@@ -53,6 +53,7 @@ if rank == 0:
                 stop()
                 logging.debug("BREAKING:BARRIER: Master post barrier breaking")
                 break
+
             if context == "break":
                 logging.debug("Master breaking")
                 #stop(barrier=False)
@@ -67,15 +68,19 @@ if rank == 0:
     thread.start()
 
 
-def handle_request(gpu_queue, requests, gpu_request):
-    logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
+def handle_request(gpu_queue, host_queues, requests, gpu_request):
 
     if type(gpu_request) is dict:
         destination = gpu_request['rank']
+        host = gpu_request['host']
     else:
         parts = gpu_request.split(':')
+        host = parts[1]
         destination = parts[2]
 
+    logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
+    gpu_queue = host_queues[host]
+    
     if destination:
         logging.debug("Master sending GPU allocation to rank[%s] queue size %s",int(destination), gpu_queue.qsize())
         try:
@@ -88,6 +93,21 @@ def handle_request(gpu_queue, requests, gpu_request):
             requests.put(gpu_request)
 
 
+def get_gpus():
+    gpus = main()
+    _gpus = {}
+    for i, gpu in enumerate(gpus):
+        gpu.update(GPUS[i])
+        if gpu['host'] not in _gpus:
+            _gpus[gpu['host']] = []
+        _gpus[gpu['host']] += [gpu]
+
+    return _gpus
+
+if rank == 0:
+    print(get_gpus())
+
+
 class gpu: 
     
     using_gpu = None
@@ -96,12 +116,18 @@ class gpu:
     free_gpus = [gpus]
     gpu_queue = SimpleQueue()
     requests = SimpleQueue()
+
+    host_queues : dict = {}
     lock = Condition()
     total_released = 0
 
     def __init__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context init %s",host,rank,kwargs)
         self.kwargs = kwargs
+
+        for gpu in get_gpus():
+            if gpu['host'] not in self.host_queues:
+                self.host_queues[gpu['host']] = SimpleQueue()
 
         for gpu in self.gpus:
             self.gpu_queue.put(gpu)
@@ -146,7 +172,7 @@ class gpu:
 
                     self.gpu_queue.put(gpu_request)
                     if request:
-                        handle_request(self.gpu_queue,  self.requests, request)
+                        handle_request(self.gpu_queue,  self.host_queues, self.requests, request)
                 else:
                     if gpu_request == "break":
                         logging.debug("[%s][%s] MASTER IS BREAKING",host,rank)
@@ -155,7 +181,7 @@ class gpu:
                         #comm.send("break", dest=0, tag=1)
                         break
 
-                    handle_request(self.gpu_queue, self.requests, gpu_request)
+                    handle_request(self.gpu_queue, self.host_queues, self.requests, gpu_request)
             else:
                 logging.debug("[%s][%s] Sending gpu request",host,rank)
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
