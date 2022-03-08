@@ -38,8 +38,8 @@ class gpu:
     
     using_gpu = None
 
-    gpus = main()
-    free_gpus = [gpus]
+    #gpus = main()
+    #free_gpus = [gpus]
     gpu_queue = SimpleQueue()
     requests = SimpleQueue()
 
