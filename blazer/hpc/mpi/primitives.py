@@ -2,10 +2,6 @@
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
 import logging
-
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
-)
 from typing import List, Any, Callable
 from mpi4py import MPI
 from functools import partial
@@ -23,9 +19,6 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 host = MPI.Get_processor_name()
 
-global loop
-loop = True
-
 MASTER = rank == 0
 
 logging.debug(f"ME: {host} RANK {rank} and procs {size}")
@@ -38,47 +31,18 @@ class begin:
             
     def __enter__(self, *args, **kwargs): 
         logging.debug("[%s][%s] Context enter",host,rank)
-        #if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
-        #    yield comm
-        #else:
         try:
             yield comm
         finally:
-            logging.debug("[%s][%s] Invoking stop",host,rank)
-            if rank == 0:
-                if 'stop' in kwargs:
-                    stop(kwargs['stop'])
-                elif 'stop' not in kwargs:
-                    stop()
+            pass
             
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         logging.debug("[%s][%s] Context exiting %s",host,rank,self.kwargs)
 
-        if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
-            logging.debug("[%s][%s] Context send to dest=0, tag=2 %s",host,rank,self.kwargs)
-            #comm.send(f"context:end:{rank}", dest=0, tag=2)
-            if rank != 0:
-                logging.debug("[%s][%s] Sending break to master 1",host,rank)
-                comm.send("break", dest=0, tag=1)  
-                logging.debug("[%s][%s] Sending break to master 2",host,rank)
-                comm.send("break", dest=0, tag=2)  
-                comm.send("break", dest=0, tag=0)  
-                #logging.debug("[%s][%s] Waiting on barrier",host,rank)
-                #comm.Barrier()
-                # TODO: This line seems to work or break depending on mpi implementation
-
-                #logging.debug("[%s][%s] Past barrier",host,rank)
-                logging.debug("[%s][%s] Sent break to master",host,rank)
         if rank == 0:
             logging.debug("[%s][%s] Master STOPPING",host,rank)
-            if 'gpu' in self.kwargs and self.kwargs['gpu'] == True:
-               logging.debug("[%s][%s] Master STOPPING barrier=False",host,rank)
-               stop(barrier=True,gpu=True)
-            else:
-               logging.debug("[%s][%s] Master STOPPING barrier=True",host,rank)
-               stop()
-            #comm.Barrier()
+            stop()
 
 def mprint(*args):
     """ Print output if on master node """
@@ -86,12 +50,13 @@ def mprint(*args):
         print(*args)
 
 
-def stop(barrier=True,gpu=False):
+def stop(barrier=True):
     """ Stop all workers from master """
 
     logging.debug("Stopping %s, %s", rank,host)
     if rank == 0:
         logging.debug("Sending break to all ranks")
+        # This will cause each worker rank to hit the barrier
         for i in range(1, size):
             logging.debug(f"Master sending break to rank {i}")
             comm.send("break", tag=0, dest=i)
@@ -100,22 +65,13 @@ def stop(barrier=True,gpu=False):
             logging.debug("Master Waiting on barrier")
             comm.Barrier() # Master should barrier until all the workers being stopped barrier too
             logging.debug("Barrier complete")
-            if not gpu:
-               logging.debug("Sending breaks: tag=2")
-               comm.send("break", dest=0, tag=2)
-        else:
-            logging.debug("Sending breaks: tag=0")
-            #comm.send("break", dest=0, tag=0)
-            logging.debug("Sending breaks: tag=1")
-            #comm.send("break", dest=0, tag=1)
-            logging.debug("Sent breaks")
 
-        logging.debug("Master STOP complete")
+        logging.debug("Master STOP complete!")
 
 if rank != 0:
     """ Monitor thread for (worker processes) receiving function tasks to execute """
     def run():
-        while loop:
+        while True:
             logging.debug("[%s] thread rank %s waiting on defer",host,  rank)
             logging.debug("[%s][%s] RECV BEFORE TAG=0",host,rank)
 
@@ -130,11 +86,6 @@ if rank != 0:
                 logging.debug("[%s] thread rank %s breaking", host, rank)
                 break
 
-            if defer == "context:end":
-                logging.debug("[%s] thread rank %s context:end", host, rank)
-                #comm.send("ok", tag=0, dest=0)
-                break
-            
             defer = dill.loads(defer)
             logging.debug("[%s] thread rank %s got defer",host,  defer)
             result = defer()

@@ -91,12 +91,10 @@ with blazer.begin():
 
     blazer.print("PIPELINE RESULT:", result)
 
-
     def get_data():
         """ Data generator """
         for i in range(0, (size * 2)):
             yield i
-
 
     result = scatter(get_data(), calc_some)
     blazer.print("SCATTER:", result)
