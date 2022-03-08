@@ -2,10 +2,6 @@
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
 import logging
-
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
-)
 from typing import List, Any, Callable
 from mpi4py import MPI
 from functools import partial
