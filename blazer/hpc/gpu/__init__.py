@@ -38,8 +38,6 @@ class gpu:
     
     using_gpu = None
 
-    #gpus = main()
-    #free_gpus = [gpus]
     gpu_queue = SimpleQueue()
     requests = SimpleQueue()
 
@@ -58,42 +56,51 @@ class gpu:
         # host
         def load_gpus():
             #try:
-            if rank == 0:
-                if os.path.exists(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt'):
-                    with open(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt') as gpufile:
-                        gpu_lines = gpufile.readlines()
-                        gpus = [None] * len(gpu_lines)
-                        for line in gpu_lines:
-                            line = line.strip()
-                            _gpu = {}
-                            parts = line.split(' ')
-                            _gpu['host'] = parts[0]
-                            if _gpu['host'] not in self.host_queues:
-                                self.host_queues[_gpu['host']] = SimpleQueue()
-                            _gpu['uuid'] = parts[-1].replace(')','').strip()
-                            _gpu['id'] = int(parts[2].replace(':',''))
-                            _gpu['name'] = parts[3]
-                            self.host_queues[_gpu['host']].put(_gpu)
-                            gpus[_gpu['id']] = _gpu
-
-                        return gpus
+            #if rank == 0:
+            logging.debug(f"Reading GPUs from /home/darren/git/blazer/blazer-{host}-gpulist.txt")
+            if os.path.exists(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt'):
+                logging.debug("Loading GPU file")
+                with open(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt') as gpufile:
+                    gpu_lines = gpufile.readlines()
+                    gpus = [None] * len(gpu_lines)
+                    for line in gpu_lines:
+                        line = line.strip()
+                        _gpu = {}
+                        parts = line.split(' ')
+                        _gpu['host'] = parts[0]
+                        if _gpu['host'] not in self.host_queues:
+                            self.host_queues[_gpu['host']] = SimpleQueue()
+                        _gpu['uuid'] = parts[-1].replace(')','').strip()
+                        _gpu['id'] = int(parts[2].replace(':',''))
+                        _gpu['name'] = parts[3]
+                        self.host_queues[_gpu['host']].put(_gpu)
+                        gpus[_gpu['id']] = _gpu
+                    logging.debug("Returning from GPU file")
+                    return gpus
             #except Exception as ex:
             #    logging.error(ex)
-            
+            logging.warn("Returning empty list for GPUS")
             return []
 
-        if rank == 0:
-            GPUS = load_gpus()
+        self.GPUS = []
 
+        try:
+            GPUS = load_gpus()
+            print("GPUS",GPUS)
             gpus = main()
             _gpus = {}
             for i, gpu in enumerate(gpus):                
+                print(i,gpu)
                 gpu.update(GPUS[i])
                 if gpu['host'] not in _gpus:
                     _gpus[gpu['host']] = []
                 _gpus[gpu['host']] += [gpu]
 
             self.GPUS = _gpus
+        except:
+            import traceback
+            print(traceback.format_exc())
+            logging.warn("No GPUS found")
 
 
     def __enter__(self, *args, **kwargs): 
