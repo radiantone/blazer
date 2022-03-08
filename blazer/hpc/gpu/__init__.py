@@ -8,67 +8,8 @@ from queue import SimpleQueue
 from multiprocessing import Condition
 from numba import cuda
 
-GPUS = []
 
-try:
-    if os.path.exists(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt'):
-        with open(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt') as gpufile:
-            gpu_lines = gpufile.readlines()
-            gpus = [None] * len(gpu_lines)
-            for line in gpu_lines:
-                _gpu = {}
-                parts = line.split(' ')
-                _gpu['host'] = parts[0]
-                _gpu['uuid'] = parts[-1].replace(')','').strip()
-                _gpu['id'] = int(parts[2].replace(':',''))
-                _gpu['name'] = parts[3]
-
-                gpus[_gpu['id']] = _gpu
-            GPUS = gpus
-except:
-    pass
-
-if rank == 0:
-    """ Monitor thread for Master, controlling user code context handlers """
-    def run():
-        while True:
-            logging.debug("[%s][%s] RECV BEFORE: Master waiting on context or break",host,rank)
-            context = comm.recv(tag=2)
-            logging.debug("[%s][%s] RECV AFTER: Master got context message %s",host,rank,context)
-
-            if context.find("context") == 0:
-                parts = context.split(":")
-                logging.debug("[%s] Master ending context for %s",rank, parts[2])
-                if int(parts[2]) == 0:
-                    stop()
-                    break
-                else:
-                    comm.send("context:end", dest=int(parts[2]))
-                    #stop()
-
-            if context == "break:barrier":
-                logging.debug("BREAKING:BARRIER: Master waiting on barrier")
-                comm.Barrier()
-                logging.debug("BREAKING:BARRIER: stop(barrier=False)")
-                stop()
-                logging.debug("BREAKING:BARRIER: Master post barrier breaking")
-                break
-
-            if context == "break":
-                logging.debug("Master breaking")
-                #stop(barrier=False)
-                break
-            
-        logging.debug("Master monitor loop ended")
-
-        # TODO: False works with non-gpu programs
-        # Notify workers to break and exit
-
-    thread = Thread(target=run)
-    thread.start()
-
-
-def handle_request(gpu_queue, host_queues, requests, gpu_request):
+def handle_request(host_queues, requests, gpu_request):
 
     if type(gpu_request) is dict:
         destination = gpu_request['rank']
@@ -80,7 +21,7 @@ def handle_request(gpu_queue, host_queues, requests, gpu_request):
 
     logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
     gpu_queue = host_queues[host]
-    
+
     if destination:
         logging.debug("Master sending GPU allocation to rank[%s] queue size %s",int(destination), gpu_queue.qsize())
         try:
@@ -91,21 +32,6 @@ def handle_request(gpu_queue, host_queues, requests, gpu_request):
         except:
             logging.debug("Master storing GPU request for rank[%s] queue size %s",int(destination), gpu_queue.qsize())
             requests.put(gpu_request)
-
-
-def get_gpus():
-    gpus = main()
-    _gpus = {}
-    for i, gpu in enumerate(gpus):
-        gpu.update(GPUS[i])
-        if gpu['host'] not in _gpus:
-            _gpus[gpu['host']] = []
-        _gpus[gpu['host']] += [gpu]
-
-    return _gpus
-
-if rank == 0:
-    print(get_gpus())
 
 
 class gpu: 
@@ -123,19 +49,57 @@ class gpu:
 
     def __init__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context init %s",host,rank,kwargs)
+
         self.kwargs = kwargs
+        GPUS = []
 
-        for gpu in get_gpus():
-            if gpu['host'] not in self.host_queues:
-                self.host_queues[gpu['host']] = SimpleQueue()
+        # Master node reads list of gpus for each node in fabric
+        # Then it places those GPU definitions on individual queues for each
+        # host
+        def load_gpus():
+            #try:
+            if rank == 0:
+                if os.path.exists(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt'):
+                    with open(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt') as gpufile:
+                        gpu_lines = gpufile.readlines()
+                        gpus = [None] * len(gpu_lines)
+                        for line in gpu_lines:
+                            line = line.strip()
+                            _gpu = {}
+                            parts = line.split(' ')
+                            _gpu['host'] = parts[0]
+                            if _gpu['host'] not in self.host_queues:
+                                self.host_queues[_gpu['host']] = SimpleQueue()
+                            _gpu['uuid'] = parts[-1].replace(')','').strip()
+                            _gpu['id'] = int(parts[2].replace(':',''))
+                            _gpu['name'] = parts[3]
+                            self.host_queues[_gpu['host']].put(_gpu)
+                            gpus[_gpu['id']] = _gpu
 
-        for gpu in self.gpus:
-            self.gpu_queue.put(gpu)
+                        return gpus
+            #except Exception as ex:
+            #    logging.error(ex)
+            
+            return []
 
-        
+        if rank == 0:
+            GPUS = load_gpus()
+
+            gpus = main()
+            _gpus = {}
+            for i, gpu in enumerate(gpus):                
+                gpu.update(GPUS[i])
+                if gpu['host'] not in _gpus:
+                    _gpus[gpu['host']] = []
+                _gpus[gpu['host']] += [gpu]
+
+            self.GPUS = _gpus
+
+
     def __enter__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
 
+        # TODO: Rework this
         while True:
 
             if rank == 0:
@@ -144,13 +108,12 @@ class gpu:
                 logging.debug("total_released %s size %s",self.total_released, size-1)
                 
                 if self.total_released == size-1:
-                    logging.debug("MASTER IS STOPPING")
-                    #stop()
-                    #break
+                    logging.debug("MASTER FINISHED: total_released = %s",self.total_released)
+                    break
                     
-                logging.debug("[%s][%s] RECV BEFORE tag=1",host,rank)
+                # Wait for GPU requests on tag 1. Block until we get a message
                 gpu_request = comm.recv(tag=1)
-                logging.debug("[%s][%s] RECV AFTER tag=1",host,rank)
+
                 logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
                 
                 if type(gpu_request) is dict and 'release' in gpu_request:
@@ -165,32 +128,39 @@ class gpu:
 
                     logging.debug("[%s][%s] Release GPU %s", host, rank,gpu_request)
                     try:
+                        
                         request = self.requests.get(block=False)
                         logging.debug("Got REQUEST %s",request)
                     except:
                         request = None
 
-                    self.gpu_queue.put(gpu_request)
+                    # Put this GPU back on the queue for that host
+                    self.host_queues[gpu_request['host']].put(gpu_request)
+
+                    # Are there any pending GPU requests on the requests queue?
                     if request:
-                        handle_request(self.gpu_queue,  self.host_queues, self.requests, request)
+                        handle_request(self.host_queues, self.requests, request)
                 else:
                     if gpu_request == "break":
                         logging.debug("[%s][%s] MASTER IS BREAKING",host,rank)
-                        #comm.send("break:barrier", dest=0, tag=2)
-                        logging.debug("[%s][%s] MASTER sent break:barrier",host,rank)
-                        #comm.send("break", dest=0, tag=1)
                         break
 
-                    handle_request(self.gpu_queue, self.host_queues, self.requests, gpu_request)
+                    # Handle the message
+                    handle_request(self.host_queues, self.requests, gpu_request)
             else:
                 logging.debug("[%s][%s] Sending gpu request",host,rank)
+
+                # Request a GPU from master node. 
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
+                
+                # Block until we get one: NOTE: What if server finishes and this receive is never fulfilled?
                 logging.debug("[%s][%s] Waiting for gpu",host,rank)
-                logging.debug("[%s][%s] RECV BEFORE TAG=1,a",host,rank)
                 self.using_gpu = gpu = comm.recv(source=0, tag=1)
-                logging.debug("[%s][%s] RECV AFTER TAG=1,a",host,rank)
-                logging.debug("[%s][%s] Allocating GPU[%s]",host,rank, gpu)
+
+                logging.debug("[%s][%s] Received GPU[%s]",host,rank, gpu)
                 cuda.select_device(gpu['id'])
+
+                # Resume context in app code
                 return gpu
 
         logging.debug("[%s][%s] Exiting GPU context: ",host,rank)
@@ -200,11 +170,15 @@ class gpu:
         logging.debug("[%s][%s] GPU Context exit",host,rank)
         cuda.close()
 
+        # Worker context is exiting, therefore, send our GPU definition back to the head
+        # node and exit the context
         if rank != 0:
             self.using_gpu['release'] = True
             self.using_gpu['rank'] = rank
             logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
             comm.send(self.using_gpu, dest=0, tag=1)
             logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
+            
         else:
+            # Master node exiting GPU context. Receive any stuck messages?
             logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
