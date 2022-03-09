@@ -51,7 +51,7 @@ class gpu:
 
         self.kwargs = kwargs
         GPUS = []
-
+        logging.info("GPU __INIT__")
         # Master node reads list of gpus for each node in fabric
         # Then it places those GPU definitions on individual queues for each
         # host
