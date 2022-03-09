@@ -106,6 +106,8 @@ class gpu:
             import traceback
             print(traceback.format_exc())
             logging.warn("No GPUS found")
+        finally:
+            return None
 
     def __enter__(self, *args, **kwargs) -> Any: 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
