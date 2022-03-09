@@ -85,19 +85,20 @@ class gpu:
         self.GPUS = []
 
         try:
-            GPUS = load_gpus()
+            self.GPUS = GPUS = load_gpus()
 
-            print("GPUS",GPUS)
-            gpus = main()
-            _gpus = {}
-            for i, gpu in enumerate(gpus):                
-                print(i,gpu)
-                gpu.update(GPUS[i])
-                if gpu['host'] not in _gpus:
-                    _gpus[gpu['host']] = []
-                _gpus[gpu['host']] += [gpu]
+            if len(GPUS):
+                print("GPUS",GPUS)
+                gpus = main()
+                _gpus = {}
+                for i, gpu in enumerate(gpus):                
+                    print(i,gpu)
+                    gpu.update(GPUS[i])
+                    if gpu['host'] not in _gpus:
+                        _gpus[gpu['host']] = []
+                    _gpus[gpu['host']] += [gpu]
 
-            self.GPUS = _gpus
+                self.GPUS = _gpus
 
         except:
             import traceback
