@@ -36,6 +36,9 @@ with blazer.begin(gpu=True):  # on-fabric MPI scheduler
         if gpu:
             logging.info(f"   [{host}][{rank}] Got GPU: {gpu}")
             #print(dovectors())
+        else:
+            logging.info(f"   [{host}][{rank}] NO GPU:")
+
     logging.info(f"   [{host}][{rank}] Exiting GPU context")
 
 logging.info(f"[{host}][{rank}] Exiting MPI context")
