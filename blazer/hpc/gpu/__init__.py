@@ -86,6 +86,10 @@ class gpu:
 
         try:
             GPUS = load_gpus()
+            if len(GPUS) == 0:
+                logging.info("I don't have any GPUS so just exiting")
+                return None
+
             print("GPUS",GPUS)
             gpus = main()
             _gpus = {}
@@ -97,6 +101,8 @@ class gpu:
                 _gpus[gpu['host']] += [gpu]
 
             self.GPUS = _gpus
+
+            return True
         except:
             import traceback
             print(traceback.format_exc())
