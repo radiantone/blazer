@@ -77,6 +77,7 @@ class gpu:
                         self.host_queues[_gpu['host']].put(_gpu)
                         gpus[_gpu['id']] = _gpu
                     logging.debug("Returning from GPU file")
+
                     return gpus
             #except Exception as ex:
             #    logging.error(ex)
@@ -106,14 +107,13 @@ class gpu:
             print(traceback.format_exc())
             logging.warn("No GPUS found")
 
-
     def __enter__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
 
         if len(self.GPUS) == 0:
             logging.info("I don't have any GPUS so just exiting")
             return None
-        # TODO: Rework this
+
         while True:
 
             if rank == 0:
