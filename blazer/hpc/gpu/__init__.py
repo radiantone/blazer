@@ -85,6 +85,9 @@ class gpu:
         self.GPUS = []
 
         try:
+            GPUS = load_gpus()
+
+            print("GPUS",GPUS)
             gpus = main()
             _gpus = {}
             for i, gpu in enumerate(gpus):                
@@ -105,12 +108,11 @@ class gpu:
     def __enter__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
 
+        if len(self.GPUS) == 0:
+            logging.info("I don't have any GPUS so just exiting")
+            return None
         # TODO: Rework this
         while True:
-
-            if len(self.GPUS) == 0:
-                logging.info("I don't have any GPUS so just exiting")
-                return None
 
             if rank == 0:
                 logging.debug("[%s][%s] Master waiting on gpu request from rank", host, rank)
