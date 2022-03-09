@@ -85,12 +85,6 @@ class gpu:
         self.GPUS = []
 
         try:
-            GPUS = load_gpus()
-            if len(GPUS) == 0:
-                logging.info("I don't have any GPUS so just exiting")
-                return None
-
-            print("GPUS",GPUS)
             gpus = main()
             _gpus = {}
             for i, gpu in enumerate(gpus):                
@@ -102,7 +96,6 @@ class gpu:
 
             self.GPUS = _gpus
 
-            return True
         except:
             import traceback
             print(traceback.format_exc())
@@ -114,6 +107,10 @@ class gpu:
 
         # TODO: Rework this
         while True:
+
+            if len(self.GPUS) == 0:
+                logging.info("I don't have any GPUS so just exiting")
+                return None
 
             if rank == 0:
                 logging.debug("[%s][%s] Master waiting on gpu request from rank", host, rank)
@@ -131,7 +128,7 @@ class gpu:
                 
                 if type(gpu_request) is dict and 'release' in gpu_request:
                     del gpu_request['release']
-                    
+
                     try:
                         logging.debug("[%s][%s] Master acquiring lock", host, rank)
                         self.lock.acquire()
