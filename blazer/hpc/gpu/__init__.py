@@ -44,6 +44,7 @@ class gpu:
     host_queues : dict = {}
     lock = Condition()
     total_released = 0
+    has_cuda = False
 
     def __init__(self, *args, **kwargs): 
         logging.debug("[%s][%s] GPU Context init %s",host,rank,kwargs)
@@ -172,7 +173,7 @@ class gpu:
 
                 logging.debug("[%s][%s] Received GPU[%s]",host,rank, gpu)
                 cuda.select_device(gpu['id'])
-
+                self.has_cuda = True
                 # Resume context in app code
                 return gpu
 
@@ -180,18 +181,21 @@ class gpu:
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # notify master of releasing this gpu
-        logging.debug("[%s][%s] GPU Context exit",host,rank)
-        cuda.close()
 
-        # Worker context is exiting, therefore, send our GPU definition back to the head
-        # node and exit the context
-        if rank != 0:
-            self.using_gpu['release'] = True
-            self.using_gpu['rank'] = rank
-            logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
-            comm.send(self.using_gpu, dest=0, tag=1)
-            logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
-            
-        else:
-            # Master node exiting GPU context. Receive any stuck messages?
-            logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
+        logging.debug("[%s][%s] GPU Context exit",host,rank)
+
+        if self.has_cuda:
+            cuda.close()
+
+            # Worker context is exiting, therefore, send our GPU definition back to the head
+            # node and exit the context
+            if rank != 0:
+                self.using_gpu['release'] = True
+                self.using_gpu['rank'] = rank
+                logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
+                comm.send(self.using_gpu, dest=0, tag=1)
+                logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
+                
+            else:
+                # Master node exiting GPU context. Receive any stuck messages?
+                logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
