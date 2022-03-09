@@ -131,7 +131,7 @@ class gpu:
                 gpu_request = comm.recv(tag=1)
 
                 logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
-                
+                        
                 if type(gpu_request) is dict and 'release' in gpu_request:
                     del gpu_request['release']
 
@@ -197,7 +197,8 @@ class gpu:
                 logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
                 comm.send(self.using_gpu, dest=0, tag=1)
                 logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
-                
             else:
                 # Master node exiting GPU context. Receive any stuck messages?
                 logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
+        else:
+            comm.send("break", dest=0, tag=1)
