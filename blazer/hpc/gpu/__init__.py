@@ -7,7 +7,7 @@ from threading import Thread
 from queue import SimpleQueue
 from multiprocessing import Condition
 from numba import cuda
-
+from typing import Any
 
 def handle_request(host_queues, requests, gpu_request):
 
@@ -107,7 +107,7 @@ class gpu:
             print(traceback.format_exc())
             logging.warn("No GPUS found")
 
-    def __enter__(self, *args, **kwargs): 
+    def __enter__(self, *args, **kwargs) -> Any: 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
 
         if len(self.GPUS) == 0:
@@ -179,7 +179,7 @@ class gpu:
 
         logging.debug("[%s][%s] Exiting GPU context: ",host,rank)
 
-    def __exit__(self, exc_type, exc_value, exc_traceback): 
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> Any:
         # notify master of releasing this gpu
 
         logging.debug("[%s][%s] GPU Context exit",host,rank)
