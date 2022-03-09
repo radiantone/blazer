@@ -201,4 +201,4 @@ class gpu:
                 # Master node exiting GPU context. Receive any stuck messages?
                 logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
         else:
-            comm.send("break", dest=0, tag=1)
+            comm.send("pass", dest=0, tag=1)
