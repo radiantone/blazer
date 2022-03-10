@@ -100,7 +100,7 @@ class gpu:
                 self.GPUS = flatten(self.GPUS)
                 self.gpuranks = len(self.GPUS)
                 for gpu in self.GPUS:
-                        self.host_queues[gpu['host']] = SimpleQueue()
+                    self.host_queues[gpu['host']] = SimpleQueue()
 
                 #comm.Barrier()
             
@@ -131,9 +131,7 @@ class gpu:
     def __enter__(self, *args, **kwargs) -> Any: 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
 
-        if len(self.GPUS) == 0:
-            logging.info("[%s][%s] I don't have any GPUS so just exiting",host,rank)
-            return None
+
 
         while True:
 
@@ -188,6 +186,10 @@ class gpu:
                     # Handle the message
                     handle_request(self.host_queues, self.requests, gpu_request)
             else:
+                if len(self.GPUS) == 0:
+                    logging.info("[%s][%s] I don't have any GPUS so just exiting",host,rank)
+                    break
+                
                 logging.debug("[%s][%s] Sending gpu request",host,rank)
 
                 # Request a GPU from master node. 
