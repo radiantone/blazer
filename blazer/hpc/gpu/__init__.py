@@ -28,7 +28,8 @@ def handle_request(host_queues, requests, gpu_request):
         host = parts[1]
         destination = parts[2]
 
-    logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
+    logging.info("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
+    logging.info("[%s][%s] Got gpu request[host_queues]: %s", host, rank,host_queues)
     gpu_queue = host_queues[host]
 
     if destination:
