@@ -100,11 +100,11 @@ class gpu:
                     for gpu in gpulist:
                         self.host_queues[gpu['host']] = SimpleQueue()
 
-                comm.Barrier()
+                #comm.Barrier()
             else:
                 import platform
                 print("WAITING FOR MASTER TO GATHER GPU DATA")
-                comm.Barrier()
+                #comm.Barrier()
                 try:
                     gpus = main()
                     for gpu in gpus:
