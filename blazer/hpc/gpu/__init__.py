@@ -9,13 +9,22 @@ from multiprocessing import Condition
 from numba import cuda
 from typing import Any
 
+ranks_exit_request = SimpleQueue()
+
 def handle_request(host_queues, requests, gpu_request):
 
     if type(gpu_request) is dict:
         destination = gpu_request['rank']
         host = gpu_request['host']
     else:
+        if gpu_request == "pass":
+            ranks_exit_request.put("exit")
+
         parts = gpu_request.split(':')
+        if len(parts) != 3:
+            logging.warn("Invalid message %s", gpu_request)
+            return
+
         host = parts[1]
         destination = parts[2]
 
@@ -123,7 +132,10 @@ class gpu:
                 logging.debug("Master requests %s", self.requests.qsize())
                 logging.debug("total_released %s size %s",self.total_released, size-1)
                 
-                if self.total_released == size-1:
+            
+                # If the # of rank exist requests + 1 (master) equals the total number of ranks
+                # Then master node can exit. All ranks have reported in
+                if size == ranks_exit_request.qsize()+1:
                     logging.debug("MASTER FINISHED: total_released = %s",self.total_released)
                     break
                     
@@ -197,6 +209,8 @@ class gpu:
                 logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
                 comm.send(self.using_gpu, dest=0, tag=1)
                 logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
+
+                ranks_exit_request.put("exit")
             else:
                 # Master node exiting GPU context. Receive any stuck messages?
                 logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
