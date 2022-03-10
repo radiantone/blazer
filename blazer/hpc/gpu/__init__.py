@@ -92,6 +92,11 @@ class gpu:
             if rank == 0:
                 self.GPUS = load_gpus()
                 print(self.GPUS)
+                comm.Barrier()
+            else:
+                print("WAITING FOR MASTER TO GATHER GPU DATA")
+                comm.Barrier()
+
         except:
             import traceback
             print(traceback.format_exc())
