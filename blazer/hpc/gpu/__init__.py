@@ -140,10 +140,10 @@ class gpu:
             if rank == 0:
                 logging.debug("[%s][%s] Master waiting on gpu request from rank", host, rank)
                 logging.debug("Master requests %s", self.requests.qsize())
-                logging.debug("size is %s and ranks_exit_request.qsize()+1 is %s", size, ranks_exit_request.qsize()+1)
+                logging.info("size is %s and ranks_exit_request.qsize()+1 is %s", size, ranks_exit_request.qsize()+1)
 
                 logging.debug("total_released %s size %s",self.total_released, size-1)
-                logging.debug("size is %s and ranks_exit_request.qsize()+1 is %s", self.gpuranks, ranks_exit_request.qsize()+1)
+                logging.info("gpuranks is %s and ranks_exit_request.qsize()+1 is %s", self.gpuranks, ranks_exit_request.qsize()+1)
                 # If the # of rank exist requests + 1 (master) equals the total number of ranks
                 # Then master node can exit. All ranks have reported in
                 if self.gpuranks == ranks_exit_request.qsize()+1:
