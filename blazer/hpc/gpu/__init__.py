@@ -93,11 +93,13 @@ class gpu:
         self.GPUS = []
 
         try:
+            from pydash import flatten
             if rank == 0:
                 self.GPUS = load_gpus()
                 print("GPUS",self.GPUS)
-                for gpulist in self.GPUS:
-                    for gpu in gpulist:
+                self.GPUS = flatten(self.GPUS)
+                self.gpuranks = len(self.GPUS)
+                for gpu in self.GPUS:
                         self.host_queues[gpu['host']] = SimpleQueue()
 
                 #comm.Barrier()
@@ -143,7 +145,7 @@ class gpu:
                 logging.debug("size is %s and ranks_exit_request.qsize()+1 is %s", size, ranks_exit_request.qsize()+1)
                 # If the # of rank exist requests + 1 (master) equals the total number of ranks
                 # Then master node can exit. All ranks have reported in
-                if size == ranks_exit_request.qsize()+1:
+                if self.gpuranks == ranks_exit_request.qsize()+1:
                     logging.debug("MASTER FINISHED: total_released = %s",self.total_released)
                     break
                     
