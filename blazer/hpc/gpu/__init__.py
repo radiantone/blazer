@@ -85,7 +85,7 @@ class gpu:
                 gpus = []
             gpulist = [gpu for gpu in gpus if len(gpu) > 0]
 
-            logging.info("GOT GPUs for rank[%s]",rank, gpulist)
+            logging.info("GOT GPUs for rank[%s] %s",rank, gpulist)
             return gpulist
             
 
