@@ -70,11 +70,14 @@ class gpu:
                 from blazer.hpc.mpi import rank
                 import platform
                 logging.info("GETTING GPU for rank[%s]",rank)
-                gpus = main()
-                for gpu in gpus:
-                    gpu['host'] = platform.node()
-                    gpu['rank'] = rank
-                return gpus
+                try:
+                    gpus = main()
+                    for gpu in gpus:
+                        gpu['host'] = platform.node()
+                        gpu['rank'] = rank
+                    return gpus
+                except:
+                    return []
 
             gpu_calls = [p(get_gpus) for i in range(1,size)]
             gpus = parallel(gpu_calls)
