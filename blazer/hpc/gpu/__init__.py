@@ -149,7 +149,7 @@ class gpu:
                 gpu_request = comm.recv(tag=1)
                 logging.info("MASTER got gpu_request")
 
-                logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
+                logging.info("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
                         
                 if type(gpu_request) is dict and 'release' in gpu_request:
                     del gpu_request['release']
