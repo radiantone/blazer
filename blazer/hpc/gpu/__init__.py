@@ -96,6 +96,8 @@ class gpu:
             else:
                 print("WAITING FOR MASTER TO GATHER GPU DATA")
                 comm.Barrier()
+                self.GPUS = load_gpus()
+                print(self.GPUS)
 
         except:
             import traceback
