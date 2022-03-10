@@ -80,9 +80,7 @@ class gpu:
                     return []
 
             gpu_calls = [p(get_gpus) for i in range(1,size)]
-            print("GETTING GPUS")
             gpus = parallel(gpu_calls)
-            print("GET_GPUS:",gpus)
             if not gpus:
                 gpus = []
             return [gpu for gpu in gpus if len(gpu) > 0]
@@ -93,13 +91,11 @@ class gpu:
         try:
             if rank == 0:
                 self.GPUS = load_gpus()
-                print(self.GPUS)
                 comm.Barrier()
             else:
                 print("WAITING FOR MASTER TO GATHER GPU DATA")
                 comm.Barrier()
                 self.GPUS = load_gpus()
-                print(self.GPUS)
 
         except:
             import traceback
