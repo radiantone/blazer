@@ -59,58 +59,37 @@ class gpu:
         logging.debug("[%s][%s] GPU Context init %s",host,rank,kwargs)
 
         self.kwargs = kwargs
-        GPUS = []
-        logging.info("GPU __INIT__")
         # Master node reads list of gpus for each node in fabric
         # Then it places those GPU definitions on individual queues for each
         # host
-        def load_gpus():
-            #try:
-            #if rank == 0:
-            logging.debug(f"Reading GPUs from /home/darren/git/blazer/blazer-{host}-gpulist.txt")
-            if os.path.exists(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt'):
-                logging.debug("Loading GPU file")
-                with open(f'/home/darren/git/blazer/blazer-{host}-gpulist.txt') as gpufile:
-                    gpu_lines = gpufile.readlines()
-                    gpus = [None] * len(gpu_lines)
-                    for line in gpu_lines:
-                        line = line.strip()
-                        _gpu = {}
-                        parts = line.split(' ')
-                        _gpu['host'] = parts[0]
-                        if _gpu['host'] not in self.host_queues:
-                            self.host_queues[_gpu['host']] = SimpleQueue()
-                        _gpu['uuid'] = parts[-1].replace(')','').strip()
-                        _gpu['id'] = int(parts[2].replace(':',''))
-                        _gpu['name'] = parts[3]
-                        self.host_queues[_gpu['host']].put(_gpu)
-                        gpus[_gpu['id']] = _gpu
-                    logging.debug("Returning from GPU file")
 
-                    return gpus
-            #except Exception as ex:
-            #    logging.error(ex)
-            logging.warn("Returning empty list for GPUS")
-            return []
+        def load_gpus():
+            from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
+
+            if rank != 0:
+                return []
+
+            def get_gpus():
+                from blazer.hpc.mpi import rank
+                import platform
+                logging.info("GETTING GPU for rank[%s]",rank)
+                gpus = main()
+                for gpu in gpus:
+                    gpu['host'] = platform.node()
+                    gpu['rank'] = rank
+                return gpus
+
+            gpu_calls = [p(get_gpus) for i in range(1,size)]
+            gpus = parallel(gpu_calls)
+            print("GET_GPUS:",gpus)
+            return gpus
+            
 
         self.GPUS = []
 
         try:
-            self.GPUS = GPUS = load_gpus()
-
-            if len(GPUS):
-                print("GPUS",GPUS)
-                gpus = main()
-                _gpus = {}
-                for i, gpu in enumerate(gpus):                
-                    print(i,gpu)
-                    gpu.update(GPUS[i])
-                    if gpu['host'] not in _gpus:
-                        _gpus[gpu['host']] = []
-                    _gpus[gpu['host']] += [gpu]
-
-                self.GPUS = _gpus
-
+            if rank == 0:
+                self.GPUS = load_gpus()
         except:
             import traceback
             print(traceback.format_exc())
