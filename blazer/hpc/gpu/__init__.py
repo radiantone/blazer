@@ -85,7 +85,7 @@ class gpu:
             print("GET_GPUS:",gpus)
             if not gpus:
                 gpus = []
-            return [gpu for gpu in gpus len(gpu) > 0]
+            return [gpu for gpu in gpus if len(gpu) > 0]
             
 
         self.GPUS = []
