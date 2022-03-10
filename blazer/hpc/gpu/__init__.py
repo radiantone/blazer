@@ -194,10 +194,10 @@ class gpu:
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
                 
                 # Block until we get one: NOTE: What if server finishes and this receive is never fulfilled?
-                logging.debug("[%s][%s] Waiting for gpu",host,rank)
+                logging.info("[%s][%s] RECV Waiting for gpu",host,rank)
                 self.using_gpu = gpu = comm.recv(source=0, tag=1)
 
-                logging.debug("[%s][%s] Received GPU[%s]",host,rank, gpu)
+                logging.info("[%s][%s] RECV Received GPU[%s]",host,rank, gpu)
                 cuda.select_device(gpu['id'])
                 self.has_cuda = True
                 # Resume context in app code
