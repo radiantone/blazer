@@ -253,14 +253,25 @@ def scatter(data: Any, func: Callable):
     
     chunked_data = chunker(data, size)
     results = []
+
     for i, chunk in enumrate(chunked_data):
+
+        # Pad data for rank size
+        extra_chunks = 0
         if len(chunk) < size:
-            chunk += [None for i in range(len(chunk), size)]
+            chunk_list = [None for i in range(len(chunk), size)]
+            extra_chunks = len(chunk_list)
+            chunk += chunk_list
 
         data = comm.scatter(chunk, root=0)
         _data = func(data)
         logging.debug("[%s] scatter[%s, %s]: Chunk %s %s, Func is %s Data is %s Result is %s", host, rank,host,i, chunk, func, data, _data)
         newData = comm.gather(_data, root=0)
+
+        # Unpad data
+        if newData and extra_chunks > 0:
+            newData = newData[:-extra_chunks]
+
         results += [newData]
 
     return flatten(results)
