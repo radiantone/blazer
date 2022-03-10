@@ -96,7 +96,6 @@ class gpu:
             from pydash import flatten
             if rank == 0:
                 self.GPUS = load_gpus()
-                print("GPUS",self.GPUS)
                 self.GPUS = flatten(self.GPUS)
                 self.gpuranks = len(self.GPUS)
                 for gpu in self.GPUS:
@@ -106,15 +105,14 @@ class gpu:
             
             else:
                 import platform
-                print("WAITING FOR MASTER TO GATHER GPU DATA")
+                #print("WAITING FOR MASTER TO GATHER GPU DATA")
                 #comm.Barrier()
                 try:
                     gpus = main()
                     for gpu in gpus:
                         gpu['host'] = platform.node()
                         gpu['rank'] = rank
-                        print("GPU",gpu)
-                    self.GPUS = gpus
+                    self.GPUS = flatten(gpus)
                 except Exception as ex:
                     logging.error(ex)
                     self.GPUS = []
@@ -130,8 +128,6 @@ class gpu:
 
     def __enter__(self, *args, **kwargs) -> Any: 
         logging.debug("[%s][%s] GPU Context enter",host,rank)
-
-
 
         while True:
 
@@ -149,7 +145,9 @@ class gpu:
                     break
                     
                 # Wait for GPU requests on tag 1. Block until we get a message
+                logging.info("MASTER recv")
                 gpu_request = comm.recv(tag=1)
+                logging.info("MASTER got gpu_request")
 
                 logging.debug("[%s][%s] Master got request from rank %s", host, rank, gpu_request)
                         
@@ -189,7 +187,7 @@ class gpu:
                 if len(self.GPUS) == 0:
                     logging.info("[%s][%s] I don't have any GPUS so just exiting",host,rank)
                     break
-                
+
                 logging.debug("[%s][%s] Sending gpu request",host,rank)
 
                 # Request a GPU from master node. 
