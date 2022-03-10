@@ -80,6 +80,7 @@ class gpu:
                     return []
 
             gpu_calls = [p(get_gpus) for i in range(1,size)]
+            print("GETTING GPUS")
             gpus = parallel(gpu_calls)
             print("GET_GPUS:",gpus)
             return [gpu for gpu in gpus if len(gpu) > 0]
