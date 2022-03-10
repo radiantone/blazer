@@ -99,6 +99,7 @@ class gpu:
                 print("WAITING FOR MASTER TO GATHER GPU DATA")
                 comm.Barrier()
                 self.GPUS = load_gpus()
+                logging.info("GOT GPUs for rank[%s] %s",rank, self.GPUS)
 
         except:
             import traceback
