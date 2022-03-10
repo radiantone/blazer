@@ -122,7 +122,7 @@ class gpu:
         logging.debug("[%s][%s] GPU Context enter",host,rank)
 
         if len(self.GPUS) == 0:
-            logging.info("I don't have any GPUS so just exiting")
+            logging.info("[%s][%s] I don't have any GPUS so just exiting",host,rank)
             return None
 
         while True:
