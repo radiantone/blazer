@@ -79,7 +79,7 @@ class PylintCommand(distutils.cmd.Command):
 
 class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
-    CLEAN_FILES = './docs/_build ./*.out ./*.log ./work/* ./build ./dist ./__pycache__ ./*/__pycache__ ./*.pyc ./ssh*py ./*.tgz ./.pytest_cache ./*.egg-info'.split(
+    CLEAN_FILES = './docs/_build ./*.out ./*.log ./work/* ./build ./dist ./__pycache__ ./blazer/cli/__pycache__ ./*/__pycache__ ./*.pyc ./ssh*py ./*.tgz ./.pytest_cache ./*.egg-info'.split(
         ' ')
 
     user_options = []
