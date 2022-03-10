@@ -67,7 +67,7 @@ def run(context, shell, mpi, args, numjobs, command):
         else:
             logging.info("Running job %s: jobid [%s] uuid [%s]",cmd['command'],cmd['jobid'],cmd['uuid'])
 
-        result = subprocess.run(cmd['command'], stdout=subprocess.PIPE)
+        result = subprocess.run(cmd['command'], shell=True, stdout=subprocess.PIPE)
 
         return result.stdout.decode('utf-8').strip()
 
