@@ -83,7 +83,7 @@ class gpu:
             print("GETTING GPUS")
             gpus = parallel(gpu_calls)
             print("GET_GPUS:",gpus)
-            return [gpu for gpu in gpus if len(gpu) > 0]
+            return [gpu for gpu in gpus if gpus and len(gpu) > 0]
             
 
         self.GPUS = []
