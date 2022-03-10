@@ -66,9 +66,6 @@ class gpu:
         def load_gpus():
             from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
 
-            if rank != 0:
-                return []
-
             def get_gpus():
                 from blazer.hpc.mpi import rank
                 import platform
