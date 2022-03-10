@@ -87,6 +87,7 @@ class gpu:
         try:
             if rank == 0:
                 self.GPUS = load_gpus()
+                print(self.GPUS)
         except:
             import traceback
             print(traceback.format_exc())
