@@ -96,9 +96,19 @@ class gpu:
                 self.GPUS = load_gpus()
                 comm.Barrier()
             else:
+                import platform
                 print("WAITING FOR MASTER TO GATHER GPU DATA")
                 comm.Barrier()
-                self.GPUS = load_gpus()
+                try:
+                    gpus = main()
+                    for gpu in gpus:
+                        gpu['host'] = platform.node()
+                        gpu['rank'] = rank
+                    self.GPUS = gpus
+                except Exception as ex:
+                    logging.error(ex)
+                    self.GPUS = []
+
                 logging.info("GOT GPUs for rank[%s] %s",rank, self.GPUS)
 
         except:
