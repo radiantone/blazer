@@ -99,7 +99,9 @@ class gpu:
                 self.GPUS = flatten(self.GPUS)
                 self.gpuranks = len(self.GPUS)
                 for gpu in self.GPUS:
-                    self.host_queues[gpu['host']] = SimpleQueue()
+                    if gpu['host'] not in self.host_queues:
+                        self.host_queues[gpu['host']] = SimpleQueue()
+                    self.host_queues[gpu['host']].put(gpu)
 
                 #comm.Barrier()
             
