@@ -188,7 +188,7 @@ class gpu:
                     logging.info("[%s][%s] I don't have any GPUS so just exiting",host,rank)
                     break
 
-                logging.debug("[%s][%s] Sending gpu request",host,rank)
+                logging.info("[%s][%s] Sending gpu request",host,rank)
 
                 # Request a GPU from master node. 
                 comm.send(f"gpu:{host}:{rank}", dest=0, tag=1)
