@@ -104,6 +104,7 @@ class gpu:
                     for gpu in gpus:
                         gpu['host'] = platform.node()
                         gpu['rank'] = rank
+                        print("GPU",gpu)
                     self.GPUS = gpus
                 except Exception as ex:
                     logging.error(ex)
