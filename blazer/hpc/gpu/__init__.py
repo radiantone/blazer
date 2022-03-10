@@ -96,8 +96,9 @@ class gpu:
             if rank == 0:
                 self.GPUS = load_gpus()
                 print("GPUS",self.GPUS)
-                for gpu in self.GPUS:
-                    self.host_queues[gpu['host']] = SimpleQueue()
+                for gpulist in self.GPUS:
+                    for gpu in gpulist:
+                        self.host_queues[gpu['host']] = SimpleQueue()
 
                 comm.Barrier()
             else:
