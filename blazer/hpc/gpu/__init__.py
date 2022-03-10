@@ -103,7 +103,7 @@ class gpu:
                         self.host_queues[gpu['host']] = SimpleQueue()
 
                 #comm.Barrier()
-            '''
+            
             else:
                 import platform
                 print("WAITING FOR MASTER TO GATHER GPU DATA")
@@ -120,7 +120,7 @@ class gpu:
                     self.GPUS = []
 
                 logging.info("GOT GPUs for rank[%s] %s",rank, self.GPUS)
-            '''
+            
         except:
             import traceback
             print(traceback.format_exc())
