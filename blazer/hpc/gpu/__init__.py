@@ -83,7 +83,10 @@ class gpu:
             gpus = parallel(gpu_calls)
             if not gpus:
                 gpus = []
-            return [gpu for gpu in gpus if len(gpu) > 0]
+            gpulist = [gpu for gpu in gpus if len(gpu) > 0]
+
+            logging.info("GOT GPUs for rank[%s]",rank, gpulist)
+            return gpulist
             
 
         self.GPUS = []
