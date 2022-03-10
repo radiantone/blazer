@@ -41,7 +41,8 @@ def cli(context, debug):
 def run(context, shell, mpi, args, numjobs, command):
     from uuid import uuid4
     import blazer
-    from blazer.hpc.mpi import rank, scatter
+    from blazer.hpc.mpi import rank, scatter, host
+    
 
     cmds = []
     for i in range(0,numjobs):
@@ -62,10 +63,10 @@ def run(context, shell, mpi, args, numjobs, command):
 
         logging.info("run_cmd: %s",cmd)
         if rank:
-            logging.info("Running job Rank[%s] %s: jobid [%s] uuid [%s]",rank,cmd['command'],cmd['jobid'],cmd['uuid'])
+            logging.info("Running job Host[%s] Rank[%s] %s: jobid [%s] uuid [%s]",host, rank,cmd['command'],cmd['jobid'],cmd['uuid'])
         else:
             logging.info("Running job %s: jobid [%s] uuid [%s]",cmd['command'],cmd['jobid'],cmd['uuid'])
-            
+
         result = subprocess.run(cmd['command'].split(' '), stdout=subprocess.PIPE)
 
         return result.stdout.decode('utf-8').strip()
