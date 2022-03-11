@@ -120,7 +120,7 @@ class gpu:
                     logging.error(ex)
                     self.GPUS = []
 
-                logging.debug("GOT GPUs for [%s][%s] %s",host,rank, self.GPUS)
+                logging.info("GOT GPUs for [%s][%s] %s",host,rank, self.GPUS)
             
         except:
             import traceback
