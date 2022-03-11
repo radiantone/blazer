@@ -17,9 +17,6 @@ def handle_request(host_queues, requests, gpu_request):
         destination = gpu_request['rank']
         host = gpu_request['host']
     else:
-        if gpu_request == "pass":
-            ranks_exit_request.put("exit")
-
         parts = gpu_request.split(':')
         if len(parts) != 3:
             logging.warn("Invalid message %s", gpu_request)
