@@ -223,7 +223,7 @@ class gpu:
                 logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s",host,rank, self.using_gpu)
                 comm.send(self.using_gpu, dest=0, tag=1)
                 logging.debug("[%s][%s] GPU Context exit: released GPU %s",host,rank, self.using_gpu)
-                ranks_exit_request.put("exit")
+                #ranks_exit_request.put("exit")
             else:
                 # Master node exiting GPU context. Receive any stuck messages?
                 logging.debug("[%s][%s] MASTER GPU Context exit",host,rank)
