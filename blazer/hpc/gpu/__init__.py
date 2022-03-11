@@ -109,6 +109,7 @@ class gpu:
                 import platform
                 #print("WAITING FOR MASTER TO GATHER GPU DATA")
                 #comm.Barrier()
+                logging.info("[%s][%s] GPU context init. Checking my GPUS", host,rank)
                 try:
                     gpus = main()
                     for gpu in gpus:
@@ -119,7 +120,7 @@ class gpu:
                     logging.error(ex)
                     self.GPUS = []
 
-                logging.debug("GOT GPUs for rank[%s] %s",rank, self.GPUS)
+                logging.debug("GOT GPUs for [%s][%s] %s",host,rank, self.GPUS)
             
         except:
             import traceback
@@ -142,7 +143,7 @@ class gpu:
                 logging.debug("gpuranks is %s and ranks_exit_request.qsize()+1 is %s", self.gpuranks, ranks_exit_request.qsize()+1)
                 # If the # of rank exist requests + 1 (master) equals the total number of ranks
                 # Then master node can exit. All ranks have reported in
-                if self.gpuranks == ranks_exit_request.qsize():
+                if self.gpuranks == ranks_exit_request.qsize()+1:
                     logging.debug("MASTER FINISHED: total_released = %s",self.total_released)
                     break
                     
