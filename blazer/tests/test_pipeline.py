@@ -1,5 +1,5 @@
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
+from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter
 from .funcs import calc_more_stuff, calc_some, calc_stuff, add_date
 
 def test_pipeline():
@@ -17,5 +17,3 @@ def test_pipeline():
             _true = 'this' in r
 
             assert _true 
-
-            blazer.stop()
