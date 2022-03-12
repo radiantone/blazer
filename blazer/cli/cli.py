@@ -55,18 +55,18 @@ def readcmd(cmd):
 def run(context, shell, mpi, args, numjobs, command):
     from uuid import uuid4
     import blazer
-    from blazer.hpc.mpi import rank, scatter, host
+    from blazer.hpc.mpi import rank, stream, host
     
 
-    cmds = []
-    for i in range(0,numjobs):
-        uuid = str(uuid4())
-        
-        if args:
-            _command = f"{command} {i} {uuid}"
-        else:
-            _command = command
-        cmds += [{'command':_command, 'jobid':i, 'uuid':uuid}]
+    def getjobs():
+        for i in range(0,numjobs):
+            uuid = str(uuid4())
+            
+            if args:
+                _command = f"{command} {i} {uuid}"
+            else:
+                _command = command
+            yield {'command':_command, 'jobid':i, 'uuid':uuid}
         
     def run_cmd(cmd):
         import os
@@ -75,24 +75,24 @@ def run(context, shell, mpi, args, numjobs, command):
         if not cmd:
             return 0
 
-        logging.info("run_cmd: %s",cmd)
+        logging.debug("run_cmd: %s",cmd)
         if rank:
-            logging.info("Running job Host[%s] Rank[%s] %s: jobid [%s] uuid [%s]",host, rank,cmd['command'],cmd['jobid'],cmd['uuid'])
+            logging.debug("Running job Host[%s] Rank[%s] %s: jobid [%s] uuid [%s]",host, rank,cmd['command'],cmd['jobid'],cmd['uuid'])
         else:
-            logging.info("Running job %s: jobid [%s] uuid [%s]",cmd['command'],cmd['jobid'],cmd['uuid'])
+            logging.debug("Running job %s: jobid [%s] uuid [%s]",cmd['command'],cmd['jobid'],cmd['uuid'])
 
         #result = subprocess.run(cmd['command'], shell=shell, stdout=subprocess.PIPE)
 
         #return result.stdout.decode('utf-8').strip()
         return readcmd(cmd['command'])
     if mpi:
-
         with blazer.begin():
-            results = scatter(cmds, run_cmd)
-            blazer.print("RESULTS:",results)
+            results = stream(getjobs(), run_cmd) 
+            for result in results:
+                blazer.print("RESULT:",result)
     else:
-        result = [run_cmd(cmd) for cmd in cmds]
-        print("RESULTS:",result)
+        for cmd in getjobs():
+            print("RESULT:",run_cmd(cmd))
 
 
 

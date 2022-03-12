@@ -2,7 +2,7 @@
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
 import logging
-from typing import List, Any, Callable
+from typing import Generator, List, Any, Callable
 from mpi4py import MPI
 from functools import partial
 from threading import Thread
@@ -172,6 +172,17 @@ def enumrate(gen):
     for a in gen:
         yield i, a
         i += 1
+
+
+def stream(data: Generator, func: Callable):
+    """ Iterate over generator until you have collected enough data to farm out to ranks 
+    then run them in parallel and get the results, yield generator"""
+    chunk = []
+    for datum in data:
+        chunk += [partial(func, datum)]
+        if len(chunk) == size:
+            yield parallel(chunk)
+            chunk = []
 
 
 def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):

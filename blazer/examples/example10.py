@@ -1,5 +1,15 @@
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
+from blazer.hpc.mpi import stream
+from typing import Generator
+
+def datagen() -> Generator:
+   for i in range(0,100):
+      yield i
+
+def myfunc(datum):
+   from blazer.hpc.mpi import rank
+   return "Hello[{}]".format(rank)+str(datum)
 
 with blazer.begin():
-   print("Done")
+   for result in stream(datagen(), myfunc):
+      blazer.print("RESULT",result)
