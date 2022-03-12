@@ -30,6 +30,20 @@ def cli(context, debug):
     if len(sys.argv) == 1:
         click.echo(context.get_help())
 
+import tempfile,os
+def readcmd(cmd):
+    ftmp = tempfile.NamedTemporaryFile(suffix='.out', prefix='tmp', delete=False)
+    fpath = ftmp.name
+    if os.name=="nt":
+        fpath = fpath.replace("/","\\") # forwin
+    ftmp.close()
+    os.system(cmd + " > " + fpath)
+    data = ""
+    with open(fpath, 'r') as file:
+        data = file.read()
+        file.close()
+    os.remove(fpath)
+    return data
 
 @cli.command(name="run", help="Run a shell command")
 @click.option("-s", "--shell", is_flag=True, default=False, help="Run command in shell")
@@ -67,10 +81,10 @@ def run(context, shell, mpi, args, numjobs, command):
         else:
             logging.info("Running job %s: jobid [%s] uuid [%s]",cmd['command'],cmd['jobid'],cmd['uuid'])
 
-        result = subprocess.run(cmd['command'], shell=shell, stdout=subprocess.PIPE)
+        #result = subprocess.run(cmd['command'], shell=shell, stdout=subprocess.PIPE)
 
-        return result.stdout.decode('utf-8').strip()
-
+        #return result.stdout.decode('utf-8').strip()
+        return readcmd(cmd['command'])
     if mpi:
 
         with blazer.begin():
