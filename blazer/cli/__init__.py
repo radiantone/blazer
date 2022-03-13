@@ -84,7 +84,7 @@ def run(context, shell, mpi, results, args, numjobs, command):
 
         #result = subprocess.run(cmd['command'], shell=shell, stdout=subprocess.PIPE)
         #return result.stdout.decode('utf-8').strip()
-        
+
         result = readcmd(cmd['command'])
         logging.debug("run_cmd[%s] result: %s",cmd,str(result))
         return result
@@ -92,10 +92,13 @@ def run(context, shell, mpi, results, args, numjobs, command):
     if mpi:
         count = 1
         with blazer.begin():
-            results = stream(getjobs(), run_cmd, results=results) 
-            for result in results:
-                blazer.print("RESULT[{}]:".format(count),result)
+            _results = stream(getjobs(), run_cmd, results=results) 
+            for result in _results:
+                if results:
+                    blazer.print("RESULT[{}]:".format(count),result)
                 count += 1
+            
+                logging.info("Total computations: %s",count)
     else:
         for cmd in getjobs():
             print("RESULT:",run_cmd(cmd))
