@@ -93,12 +93,13 @@ def run(context, shell, mpi, results, args, numjobs, command):
         count = 1
         with blazer.begin():
             _results = stream(getjobs(), run_cmd, results=results) 
-            for result in _results:
-                if results:
-                    blazer.print("RESULT[{}]:".format(count),result)
-                count += 1
-            
-            logging.info("Total computations: %s",count)
+            if results:
+                for result in _results:
+                    if results:
+                        blazer.print("RESULT[{}]:".format(count),result)
+                    count += 1
+            else:
+                blazer.print("Total computations: {}".format(list(_results)))
     else:
         for cmd in getjobs():
             print("RESULT:",run_cmd(cmd))

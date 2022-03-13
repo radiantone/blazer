@@ -179,7 +179,9 @@ def stream(data: Generator, func: Callable, results=False):
     then run them in parallel and get the results, yield generator"""
     chunk = []
     dest_rank = 1
+    computations = 0
     for datum in data:
+        computations += 1
         if results:
             chunk += [partial(func, datum)]
             if len(chunk) == size:
@@ -190,7 +192,12 @@ def stream(data: Generator, func: Callable, results=False):
             comm.send(dill.dumps(partial(func,datum)), tag=0, dest=dest_rank)
             dest_rank = dest_rank + 1 if dest_rank < size - 1 else 1
             
-
+    if results and len(chunk) < size:
+        yield parallel(chunk)
+        
+    if not results:
+        yield computations
+        
 def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
     """ Use scatter for map/reduce in one call """
     import numpy as np
