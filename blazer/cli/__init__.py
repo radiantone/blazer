@@ -98,7 +98,7 @@ def run(context, shell, mpi, results, args, numjobs, command):
                     blazer.print("RESULT[{}]:".format(count),result)
                 count += 1
             
-                logging.info("Total computations: %s",count)
+            logging.info("Total computations: %s",count)
     else:
         for cmd in getjobs():
             print("RESULT:",run_cmd(cmd))
