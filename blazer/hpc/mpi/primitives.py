@@ -174,15 +174,22 @@ def enumrate(gen):
         i += 1
 
 
-def stream(data: Generator, func: Callable):
+def stream(data: Generator, func: Callable, results=False):
     """ Iterate over generator until you have collected enough data to farm out to ranks 
     then run them in parallel and get the results, yield generator"""
     chunk = []
+    dest_rank = 1
     for datum in data:
-        chunk += [partial(func, datum)]
-        if len(chunk) == size:
-            yield parallel(chunk)
-            chunk = []
+
+        if results:
+            chunk += [partial(func, datum)]
+            if len(chunk) == size:
+                yield parallel(chunk)
+                chunk = []
+        else:
+            logging.debug("Sending function[%s](%s) to rank %s",func,str(datum), dest_rank)
+            comm.send(dill.dumps(partial(func,datum)), tag=0, dest=dest_rank)
+            dest_rank = dest_rank + 1 if dest_rank < size - 1 else 1
 
 
 def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):

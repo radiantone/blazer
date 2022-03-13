@@ -48,11 +48,12 @@ def readcmd(cmd):
 @cli.command(name="run", help="Run a shell command")
 @click.option("-s", "--shell", is_flag=True, default=False, help="Run command in shell")
 @click.option("-m", "--mpi", is_flag=True, default=False, help="Enable MPI")
+@click.option("-r", "--results", is_flag=True, default=False, help="Return results")
 @click.option("-a", "--args", is_flag=True, default=False, help="Add jobid and uuid as args")
 @click.option("-n","--numjobs", default=1, help="Number of times to run")
 @click.option("-c","--command", default="echo hello", help="Command to run in \"'s")
 @click.pass_context
-def run(context, shell, mpi, args, numjobs, command):
+def run(context, shell, mpi, results, args, numjobs, command):
     from uuid import uuid4
     import blazer
     from blazer.hpc.mpi import rank, stream, host
@@ -82,13 +83,16 @@ def run(context, shell, mpi, args, numjobs, command):
             logging.debug("Running job %s: jobid [%s] uuid [%s]",cmd['command'],cmd['jobid'],cmd['uuid'])
 
         #result = subprocess.run(cmd['command'], shell=shell, stdout=subprocess.PIPE)
-
         #return result.stdout.decode('utf-8').strip()
-        return readcmd(cmd['command'])
+        
+        result = readcmd(cmd['command'])
+        logging.debug("run_cmd[%s] result: %s",cmd,str(result))
+        return result
+
     if mpi:
         count = 1
         with blazer.begin():
-            results = stream(getjobs(), run_cmd) 
+            results = stream(getjobs(), run_cmd, results=results) 
             for result in results:
                 blazer.print("RESULT[{}]:".format(count),result)
                 count += 1
