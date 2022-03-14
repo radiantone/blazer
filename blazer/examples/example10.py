@@ -11,5 +11,5 @@ def myfunc(datum):
    return "Hello[{}]".format(rank)+str(datum)
 
 with blazer.begin():
-   for result in stream(datagen(), myfunc):
+   for result in stream(datagen(), myfunc, results=True):
       blazer.print("RESULT",result)

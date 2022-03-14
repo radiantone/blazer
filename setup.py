@@ -120,7 +120,7 @@ setup(
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
-    packages=['blazer', 'blazer.cli', 'blazer.hpc', 'blazer.hpc.gpu', 'blazer.tests', 'blazer.hpc.mpi'],
+    packages=['blazer', 'blazer.cli', 'blazer.hpc', 'blazer.hpc.alcf', 'blazer.hpc.gpu', 'blazer.tests', 'blazer.hpc.mpi'],
     include_package_data=True,
     python_requires=">=3.8.*",
     install_requires=[
