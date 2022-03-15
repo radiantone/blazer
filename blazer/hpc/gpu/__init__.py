@@ -4,7 +4,7 @@ from typing import Any
 
 from numba import cuda
 
-from blazer.logging import logging
+from blazer.logs import logging
 
 from ..mpi.primitives import comm, host, rank, size
 from .utils import main

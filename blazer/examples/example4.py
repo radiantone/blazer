@@ -5,7 +5,7 @@ from numba import vectorize
 
 import blazer
 from blazer.hpc.mpi.primitives import host, rank
-from blazer.logging import logging
+from blazer.logs import logging
 
 
 def dovectors():

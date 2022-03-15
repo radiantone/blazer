@@ -11,7 +11,7 @@ from mpi4py import MPI
 from numpy import iterable
 from pydash import flatten
 
-from blazer.logging import logging
+from blazer.logs import logging
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
