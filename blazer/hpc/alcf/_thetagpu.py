@@ -8,9 +8,18 @@ from .then import Then
 
 
 @Then
-def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
+def job(
+    user="nobody",
+    q="debug",
+    n=1,
+    t=5,
+    A="datascience",
+    venv=None,
+    script=None,
+    code=None,
+    password=False,
+):
     class Job:
-
         def __init__(self):
             logging.debug("[THETA]: Job init")
             self._ssh = paramiko.SSHClient()
@@ -19,14 +28,14 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
         def login(self):
             logging.debug("[THETA]: Logging in from Job")
             pw = getpass.getpass("Theta MAF Password: ")
-            self._ssh.connect(hostname="theta.alcf.anl.gov",
-                              username=user, password=pw)
+            self._ssh.connect(hostname="theta.alcf.anl.gov", username=user, password=pw)
 
             return self
 
         def __call__(self, *args, **kwargs):
             import datetime
             import time
+
             data = "stubbed"
             logging.info("[THETA]: Job call %s %s", args, kwargs)
             logging.debug("[THETA]: DATA %s %s %s", data, args, kwargs)
@@ -56,8 +65,7 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
                 for line in stdout.read().splitlines():
                     if str(line).find("exiting") > -1:
                         not_finished = False
-                        logging.info(
-                            f"[THETA]: Job {job_id} has now completed.")
+                        logging.info(f"[THETA]: Job {job_id} has now completed.")
 
                 now = datetime.datetime.now()
                 if now - start > datetime.timedelta(minutes=t):
@@ -70,20 +78,19 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
 
 
 class run(object):
-
     def __exit__(self, _type, value, _traceback):
 
         stack = traceback.extract_stack()
-        file, end = self._get_origin_info(stack, '__exit__')
+        file, end = self._get_origin_info(stack, "__exit__")
         self.end = end
         logging.debug("FILE %s", self.file, self.start, self.end)
         with open(file) as code:
             lines = code.readlines()
-            logging.debug("THETA CODE: %s", lines[self.start:self.end])
+            logging.debug("THETA CODE: %s", lines[self.start : self.end])
 
     def __enter__(self):
         stack = traceback.extract_stack()
-        file, start = self._get_origin_info(stack, '__enter__')
+        file, start = self._get_origin_info(stack, "__enter__")
         self.start = start
         self.file = file
 

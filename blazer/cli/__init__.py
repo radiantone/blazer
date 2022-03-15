@@ -1,15 +1,18 @@
 import logging
-import sys
-import click
-import tempfile
 import os
+import sys
+import tempfile
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(filename)s: '
-                           '%(levelname)s: '
-                           '%(funcName)s(): '
-                           '%(lineno)d:\t'
-                           '%(message)s')
+import click
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(filename)s: "
+    "%(levelname)s: "
+    "%(funcName)s(): "
+    "%(lineno)d:\t"
+    "%(message)s",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +26,13 @@ def cli(context, debug):
 
     if debug:
         logging.basicConfig(
-            format="%(asctime)s : %(name)s %(levelname)s : %(message)s", level=logging.DEBUG
+            format="%(asctime)s : %(name)s %(levelname)s : %(message)s",
+            level=logging.DEBUG,
         )
     else:
         logging.basicConfig(
-            format="%(asctime)s : %(name)s %(levelname)s : %(message)s", level=logging.INFO
+            format="%(asctime)s : %(name)s %(levelname)s : %(message)s",
+            level=logging.INFO,
         )
 
     if len(sys.argv) == 1:
@@ -35,15 +40,14 @@ def cli(context, debug):
 
 
 def readcmd(cmd):
-    ftmp = tempfile.NamedTemporaryFile(
-        suffix='.out', prefix='tmp', delete=False)
+    ftmp = tempfile.NamedTemporaryFile(suffix=".out", prefix="tmp", delete=False)
     fpath = ftmp.name
     if os.name == "nt":
         fpath = fpath.replace("/", "\\")  # forwin
     ftmp.close()
     os.system(cmd + " > " + fpath)
     data = ""
-    with open(fpath, 'r') as file:
+    with open(fpath, "r") as file:
         data = file.read()
         file.close()
     os.remove(fpath)
@@ -54,14 +58,17 @@ def readcmd(cmd):
 @click.option("-s", "--shell", is_flag=True, default=False, help="Run command in shell")
 @click.option("-m", "--mpi", is_flag=True, default=False, help="Enable MPI")
 @click.option("-r", "--results", is_flag=True, default=False, help="Return results")
-@click.option("-a", "--args", is_flag=True, default=False, help="Add jobid and uuid as args")
+@click.option(
+    "-a", "--args", is_flag=True, default=False, help="Add jobid and uuid as args"
+)
 @click.option("-n", "--numjobs", default=1, help="Number of times to run")
 @click.option("-c", "--command", default="echo hello", help="Command to run in \"'s")
 @click.pass_context
 def run(context, shell, mpi, results, args, numjobs, command):
     from uuid import uuid4
+
     import blazer
-    from blazer.hpc.mpi import rank, stream, host
+    from blazer.hpc.mpi import host, rank, stream
 
     def getjobs():
         for i in range(0, numjobs):
@@ -71,7 +78,7 @@ def run(context, shell, mpi, results, args, numjobs, command):
                 _command = f"{command} {i} {uuid}"
             else:
                 _command = command
-            yield {'command': _command, 'jobid': i, 'uuid': uuid}
+            yield {"command": _command, "jobid": i, "uuid": uuid}
 
     def run_cmd(cmd):
 
@@ -80,16 +87,26 @@ def run(context, shell, mpi, results, args, numjobs, command):
 
         logging.debug("run_cmd: %s", cmd)
         if rank:
-            logging.debug("Running job Host[%s] Rank[%s] %s: jobid [%s] uuid [%s]", host, rank, cmd['command'],
-                          cmd['jobid'], cmd['uuid'])
+            logging.debug(
+                "Running job Host[%s] Rank[%s] %s: jobid [%s] uuid [%s]",
+                host,
+                rank,
+                cmd["command"],
+                cmd["jobid"],
+                cmd["uuid"],
+            )
         else:
             logging.debug(
-                "Running job %s: jobid [%s] uuid [%s]", cmd['command'], cmd['jobid'], cmd['uuid'])
+                "Running job %s: jobid [%s] uuid [%s]",
+                cmd["command"],
+                cmd["jobid"],
+                cmd["uuid"],
+            )
 
         # result = subprocess.run(cmd['command'], shell=shell, stdout=subprocess.PIPE)
         # return result.stdout.decode('utf-8').strip()
 
-        result = readcmd(cmd['command'])
+        result = readcmd(cmd["command"])
         logging.debug("run_cmd[%s] result: %s", cmd, str(result))
         return result
 

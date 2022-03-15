@@ -1,10 +1,10 @@
 import logging
 from threading import Thread
-from typing import List, Any, Callable
+from typing import Any, Callable, List
 
 
 def parallel(defers: List, *args):
-    """ This will use the master node 0 scheduler to scatter/gather results """
+    """This will use the master node 0 scheduler to scatter/gather results"""
 
     # threads = [executor.submit(partial(defer, *args)) for defer in defers]
     # return [thread.result() for thread in threads]
@@ -21,7 +21,7 @@ def scatter(data: Any, func: Callable):
 
 
 def pipeline(defers: List):
-    """ This will use the master node 0 scheduler to orchestrate results """
+    """This will use the master node 0 scheduler to orchestrate results"""
     last_result = None
 
     for defer in defers:

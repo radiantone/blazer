@@ -1,17 +1,17 @@
-from blazer.logging import logging
+from timeit import default_timer as timer
+
+import numpy as np
+from numba import vectorize
 
 import blazer
-import numpy as np
-
 from blazer.hpc.mpi.primitives import host, rank
-from numba import vectorize
-from timeit import default_timer as timer
+from blazer.logging import logging
 
 
 def dovectors():
-    @vectorize(['float32(float32, float32)'], target='cuda')
+    @vectorize(["float32(float32, float32)"], target="cuda")
     def dopow(a, b):
-        return a ** b
+        return a**b
 
     vec_size = 100
 

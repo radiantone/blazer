@@ -8,9 +8,18 @@ from .then import Then
 
 
 @Then
-def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
+def job(
+    user="nobody",
+    q="debug",
+    n=1,
+    t=5,
+    A="datascience",
+    venv=None,
+    script=None,
+    code=None,
+    password=False,
+):
     class Job:
-
         def __init__(self):
             logging.debug("[COOLEY]: Job init")
             self._ssh = paramiko.SSHClient()
@@ -19,15 +28,16 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
         def login(self):
             logging.debug("[COOLEY]: Logging in from Job")
             pw = getpass.getpass("Cooley MAF Password: ")
-            self._ssh.connect(hostname="cooley.alcf.anl.gov",
-                              username=user, password=pw)
+            self._ssh.connect(
+                hostname="cooley.alcf.anl.gov", username=user, password=pw
+            )
 
             return self
 
         def __call__(self, *args, **kwargs):
             logging.info("[COOLEY]: Job call %s %s", args, kwargs)
-            import time
             import datetime
+            import time
 
             data = "stubbed"
 
@@ -64,7 +74,8 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
                     if str(line).find("exiting") > -1:
                         if q == "debug":
                             logging.info(
-                                "[COOLEY]: Waiting for job to exit debug queue.")
+                                "[COOLEY]: Waiting for job to exit debug queue."
+                            )
                             is_exiting = True
                         else:
                             not_finished = False
@@ -88,20 +99,19 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
 
 
 class run(object):
-
     def __exit__(self, _type, value, _traceback):
 
         stack = traceback.extract_stack()
-        file, end = self._get_origin_info(stack, '__exit__')
+        file, end = self._get_origin_info(stack, "__exit__")
         self.end = end
         logging.debug("FILE", self.file, self.start, self.end)
         with open(file) as code:
             lines = code.readlines()
-            logging.debug("COOLEY CODE: %s", lines[self.start:self.end])
+            logging.debug("COOLEY CODE: %s", lines[self.start : self.end])
 
     def __enter__(self):
         stack = traceback.extract_stack()
-        file, start = self._get_origin_info(stack, '__enter__')
+        file, start = self._get_origin_info(stack, "__enter__")
         self.start = start
         self.file = file
 

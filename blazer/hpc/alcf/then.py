@@ -1,9 +1,8 @@
 import logging
-from typing import Callable, Any
+from typing import Any, Callable
 
 
 class JobClass:
-
     def __init__(self, thenclass, func: Callable):
         self.thenclass = thenclass
         self.func = func
@@ -31,11 +30,13 @@ class ThenClass:
 
     def __init__(self, func):
         from multiprocessing import Condition
+
         self.func = func
         self.lock = Condition()
 
     def __call__(self, *args, **kwargs):
         from functools import partial
+
         try:
             logging.debug("Then acquiring lock")
             self.lock.acquire()

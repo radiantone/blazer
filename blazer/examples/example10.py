@@ -11,6 +11,7 @@ def datagen() -> Generator:
 
 def myfunc(datum):
     from blazer.hpc.mpi import rank
+
     return "Hello[{}]".format(rank) + str(datum)
 
 

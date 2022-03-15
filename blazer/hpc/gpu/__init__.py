@@ -1,23 +1,23 @@
-from blazer.logging import logging
-
 from multiprocessing import Condition
 from queue import SimpleQueue
 from typing import Any
 
 from numba import cuda
 
+from blazer.logging import logging
+
+from ..mpi.primitives import comm, host, rank, size
 from .utils import main
-from ..mpi.primitives import rank, size, host, comm
 
 ranks_exit_request = SimpleQueue()
 
 
 def handle_request(host_queues, requests, gpu_request):
     if type(gpu_request) is dict:
-        destination = gpu_request['rank']
-        host = gpu_request['host']
+        destination = gpu_request["rank"]
+        host = gpu_request["host"]
     else:
-        parts = gpu_request.split(':')
+        parts = gpu_request.split(":")
         if gpu_request == "pass":
             return
         if len(parts) != 3:
@@ -28,21 +28,26 @@ def handle_request(host_queues, requests, gpu_request):
         destination = parts[2]
 
     logging.debug("[%s][%s] Got gpu request: %s", host, rank, gpu_request)
-    logging.debug("[%s][%s] Got gpu request[host_queues]: %s",
-                  host, rank, host_queues)
+    logging.debug("[%s][%s] Got gpu request[host_queues]: %s", host, rank, host_queues)
     gpu_queue = host_queues[host]
 
     if destination:
-        logging.debug("Master sending GPU allocation to rank[%s] queue size %s", int(
-            destination), gpu_queue.qsize())
+        logging.debug(
+            "Master sending GPU allocation to rank[%s] queue size %s",
+            int(destination),
+            gpu_queue.qsize(),
+        )
         try:
             gpu = gpu_queue.get(block=False)
             if gpu:
                 logging.debug("Master Got GPU from QUEUE %s", gpu)
                 comm.send(gpu, dest=int(destination), tag=1)
         except Exception as ex:
-            logging.debug("Master storing GPU request for rank[%s] queue size %s", int(
-                destination), gpu_queue.qsize())
+            logging.debug(
+                "Master storing GPU request for rank[%s] queue size %s",
+                int(destination),
+                gpu_queue.qsize(),
+            )
             requests.put(gpu_request)
 
 
@@ -67,17 +72,21 @@ class gpu:
         # host
 
         def load_gpus():
-            from blazer.hpc.mpi import parallel, partial as p, rank, size
+            from blazer.hpc.mpi import parallel
+            from blazer.hpc.mpi import partial as p
+            from blazer.hpc.mpi import rank, size
 
             def get_gpus():
-                from blazer.hpc.mpi import rank
                 import platform
+
+                from blazer.hpc.mpi import rank
+
                 logging.debug("GETTING GPU for rank[%s]", rank)
                 try:
                     gpus = main()
                     for gpu in gpus:
-                        gpu['host'] = platform.node()
-                        gpu['rank'] = rank
+                        gpu["host"] = platform.node()
+                        gpu["rank"] = rank
                     return gpus
                 except:
                     return []
@@ -95,28 +104,29 @@ class gpu:
 
         try:
             from pydash import flatten
+
             if rank == 0:
                 self.GPUS = load_gpus()
                 self.GPUS = flatten(self.GPUS)
                 self.gpuranks = len(self.GPUS)
                 for gpu in self.GPUS:
-                    if gpu['host'] not in self.host_queues:
-                        self.host_queues[gpu['host']] = SimpleQueue()
-                    self.host_queues[gpu['host']].put(gpu)
+                    if gpu["host"] not in self.host_queues:
+                        self.host_queues[gpu["host"]] = SimpleQueue()
+                    self.host_queues[gpu["host"]].put(gpu)
 
                 # comm.Barrier()
 
             else:
                 import platform
+
                 # print("WAITING FOR MASTER TO GATHER GPU DATA")
                 # comm.Barrier()
-                logging.info(
-                    "[%s][%s] GPU context init. Checking my GPUS", host, rank)
+                logging.info("[%s][%s] GPU context init. Checking my GPUS", host, rank)
                 try:
                     gpus = main()
                     for gpu in gpus:
-                        gpu['host'] = platform.node()
-                        gpu['rank'] = rank
+                        gpu["host"] = platform.node()
+                        gpu["rank"] = rank
                     self.GPUS = flatten(gpus)
                 except Exception as ex:
                     logging.error(ex)
@@ -126,6 +136,7 @@ class gpu:
 
         except Exception as ex:
             import traceback
+
             print(traceback.format_exc())
             logging.warn("No GPUS found")
         finally:
@@ -138,20 +149,29 @@ class gpu:
 
             if rank == 0:
                 logging.debug(
-                    "[%s][%s] Master waiting on gpu request from rank", host, rank)
+                    "[%s][%s] Master waiting on gpu request from rank", host, rank
+                )
                 logging.debug("Master requests %s", self.requests.qsize())
-                logging.debug("size is %s and ranks_exit_request.qsize()+1 is %s",
-                              size, ranks_exit_request.qsize() + 1)
+                logging.debug(
+                    "size is %s and ranks_exit_request.qsize()+1 is %s",
+                    size,
+                    ranks_exit_request.qsize() + 1,
+                )
 
-                logging.debug("total_released %s size %s",
-                              self.total_released, size - 1)
-                logging.debug("gpuranks is %s and ranks_exit_request.qsize()+1 is %s", self.gpuranks,
-                              ranks_exit_request.qsize() + 1)
+                logging.debug(
+                    "total_released %s size %s", self.total_released, size - 1
+                )
+                logging.debug(
+                    "gpuranks is %s and ranks_exit_request.qsize()+1 is %s",
+                    self.gpuranks,
+                    ranks_exit_request.qsize() + 1,
+                )
                 # If the # of rank exist requests + 1 (master) equals the total number of ranks
                 # Then master node can exit. All ranks have reported in
                 if self.gpuranks == ranks_exit_request.qsize() + 1:
                     logging.debug(
-                        "MASTER FINISHED: total_released = %s", self.total_released)
+                        "MASTER FINISHED: total_released = %s", self.total_released
+                    )
                     break
 
                 # Wait for GPU requests on tag 1. Block until we get a message
@@ -160,24 +180,22 @@ class gpu:
                 logging.debug("MASTER got gpu_request")
 
                 logging.debug(
-                    "[%s][%s] Master got request from rank %s", host, rank, gpu_request)
+                    "[%s][%s] Master got request from rank %s", host, rank, gpu_request
+                )
 
-                if type(gpu_request) is dict and 'release' in gpu_request:
-                    del gpu_request['release']
+                if type(gpu_request) is dict and "release" in gpu_request:
+                    del gpu_request["release"]
 
                     try:
-                        logging.debug(
-                            "[%s][%s] Master acquiring lock", host, rank)
+                        logging.debug("[%s][%s] Master acquiring lock", host, rank)
                         self.lock.acquire()
                         self.total_released += 1
                         ranks_exit_request.put("exit")
                     finally:
-                        logging.debug(
-                            "[%s][%s] Master releasing lock", host, rank)
+                        logging.debug("[%s][%s] Master releasing lock", host, rank)
                         self.lock.release()
 
-                    logging.debug("[%s][%s] Release GPU %s",
-                                  host, rank, gpu_request)
+                    logging.debug("[%s][%s] Release GPU %s", host, rank, gpu_request)
                     try:
                         request = self.requests.get(block=False)
                         logging.debug("Got REQUEST %s", request)
@@ -185,25 +203,23 @@ class gpu:
                         request = None
 
                     # Put this GPU back on the queue for that host
-                    self.host_queues[gpu_request['host']].put(gpu_request)
+                    self.host_queues[gpu_request["host"]].put(gpu_request)
 
                     # Are there any pending GPU requests on the requests queue?
                     if request:
-                        handle_request(self.host_queues,
-                                       self.requests, request)
+                        handle_request(self.host_queues, self.requests, request)
                 else:
                     if gpu_request == "break":
-                        logging.debug(
-                            "[%s][%s] MASTER IS BREAKING", host, rank)
+                        logging.debug("[%s][%s] MASTER IS BREAKING", host, rank)
                         break
 
                     # Handle the message
-                    handle_request(self.host_queues,
-                                   self.requests, gpu_request)
+                    handle_request(self.host_queues, self.requests, gpu_request)
             else:
                 if len(self.GPUS) == 0:
                     logging.debug(
-                        "[%s][%s] I don't have any GPUS so just exiting", host, rank)
+                        "[%s][%s] I don't have any GPUS so just exiting", host, rank
+                    )
                     break
 
                 logging.debug("[%s][%s] Sending gpu request", host, rank)
@@ -215,9 +231,8 @@ class gpu:
                 logging.debug("[%s][%s] RECV Waiting for gpu", host, rank)
                 self.using_gpu = gpu = comm.recv(source=0, tag=1)
 
-                logging.debug("[%s][%s] RECV Received GPU[%s]",
-                              host, rank, gpu)
-                cuda.select_device(gpu['id'])
+                logging.debug("[%s][%s] RECV Received GPU[%s]", host, rank, gpu)
+                cuda.select_device(gpu["id"])
                 self.has_cuda = True
                 # Resume context in app code
                 return gpu
@@ -235,13 +250,21 @@ class gpu:
             # Worker context is exiting, therefore, send our GPU definition back to the head
             # node and exit the context
             if rank != 0:
-                self.using_gpu['release'] = True
-                self.using_gpu['rank'] = rank
-                logging.debug("[%s][%s] GPU Context exit: sending gpu back to master GPU %s", host, rank,
-                              self.using_gpu)
+                self.using_gpu["release"] = True
+                self.using_gpu["rank"] = rank
+                logging.debug(
+                    "[%s][%s] GPU Context exit: sending gpu back to master GPU %s",
+                    host,
+                    rank,
+                    self.using_gpu,
+                )
                 comm.send(self.using_gpu, dest=0, tag=1)
                 logging.debug(
-                    "[%s][%s] GPU Context exit: released GPU %s", host, rank, self.using_gpu)
+                    "[%s][%s] GPU Context exit: released GPU %s",
+                    host,
+                    rank,
+                    self.using_gpu,
+                )
                 # ranks_exit_request.put("exit")
             else:
                 # Master node exiting GPU context. Receive any stuck messages?

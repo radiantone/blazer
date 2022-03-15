@@ -11,14 +11,15 @@ def datagen() -> Generator:
 
 def myfunc(datum):
     from blazer.hpc.mpi import rank
+
     return "Hello[{}]".format(rank) + str(datum)
 
 
 with blazer.begin():
     results = scatter(datagen(), myfunc)
     blazer.print("RESULT", results)
-    '''
+    """
     # A version that iterates over results
     for result in scatter(datagen(), myfunc):
         blazer.print("RESULT",result)
-    '''
+    """

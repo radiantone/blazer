@@ -1,5 +1,7 @@
 import blazer
-from blazer.hpc.mpi import parallel, partial as p
+from blazer.hpc.mpi import parallel
+from blazer.hpc.mpi import partial as p
+
 from .funcs import calc_stuff
 
 
@@ -10,7 +12,7 @@ def test_parallel():
             p(calc_stuff, 2),
             p(calc_stuff, 3),
             p(calc_stuff, 4),
-            p(calc_stuff, 5)
+            p(calc_stuff, 5),
         ]
         result = parallel(tasks)
 

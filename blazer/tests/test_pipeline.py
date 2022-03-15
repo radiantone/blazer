@@ -1,20 +1,17 @@
 import blazer
-from blazer.hpc.mpi import pipeline, partial as p
-from .funcs import calc_some, calc_stuff, add_date
+from blazer.hpc.mpi import partial as p
+from blazer.hpc.mpi import pipeline
+
+from .funcs import add_date, calc_some, calc_stuff
 
 
 def test_pipeline():
     with blazer.begin():
-        r = pipeline([
-            p(calc_stuff, 'DATA'),
-            p(pipeline, [
-                calc_some,
-                add_date
-            ]),
-            calc_stuff
-        ])
+        r = pipeline(
+            [p(calc_stuff, "DATA"), p(pipeline, [calc_some, add_date]), calc_stuff]
+        )
 
         if blazer.ROOT:
-            _true = 'this' in r
+            _true = "this" in r
 
             assert _true

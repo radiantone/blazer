@@ -19,11 +19,15 @@ def add(values):
 
 with blazer.begin():
     if blazer.ROOT:
-        data = ['one', 'two', 'two', 'three', 'three', 'three']
+        data = ["one", "two", "two", "three", "three", "three"]
         print("DATA: ", data)
     else:
         data = None
 
-    result = mapreduce(count, add, data, )
+    result = mapreduce(
+        count,
+        add,
+        data,
+    )
 
     blazer.print("RESULT:", result)
