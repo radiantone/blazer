@@ -2,6 +2,7 @@
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
 import logging
+
 from typing import Generator, List, Any, Callable
 from mpi4py import MPI
 from functools import partial
@@ -44,6 +45,7 @@ class begin:
             logging.debug("[%s][%s] Master STOPPING",host,rank)
             stop()
 
+
 def mprint(*args):
     """ Print output if on master node """
     if rank == 0:
@@ -67,6 +69,7 @@ def stop(barrier=True):
             logging.debug("Barrier complete")
 
         logging.debug("Master STOP complete!")
+
 
 if rank != 0:
     """ Monitor thread for (worker processes) receiving function tasks to execute """
@@ -175,8 +178,9 @@ def enumrate(gen):
 
 
 def stream(data: Generator, func: Callable, results=False):
-    """ Iterate over generator until you have collected enough data to farm out to ranks 
-    then run them in parallel and get the results, yield generator"""
+    """ Iterate over generator and send each datum to a different rank as you go (no results returned).
+    If you want to return results that the calling code can also iterate over, then it will
+    incrementally return results, running operations in parallel chunks over all the available CPU ranks."""
     chunk = []
     dest_rank = 1
     computations = 0
@@ -194,10 +198,11 @@ def stream(data: Generator, func: Callable, results=False):
             
     if results and len(chunk) < size:
         yield parallel(chunk)
-        
+
     if not results:
         yield computations
         
+
 def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
     """ Use scatter for map/reduce in one call """
     import numpy as np
@@ -222,6 +227,7 @@ def mapreduce(_map: Callable, _reduce: Callable, data: Any, require_list=False):
         if require_list and type(_data) is list:
             mapreduce(_map, _reduce, _data)
         return _data
+
 
 def map(func: Callable, data: Any):
     """ Apply map function over data elements """
@@ -299,6 +305,7 @@ def scatter(data: Any, func: Callable):
         results += [newData]
 
     return flatten(results)
+
 
 def pipeline(defers: List, *args):
     """ Run list of functions in ordered sequence, passing intermediate results on to next task """

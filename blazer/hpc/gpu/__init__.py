@@ -18,6 +18,8 @@ def handle_request(host_queues, requests, gpu_request):
         host = gpu_request['host']
     else:
         parts = gpu_request.split(':')
+        if gpu_request == "pass":
+            return
         if len(parts) != 3:
             logging.warn("Invalid message %s", gpu_request)
             return

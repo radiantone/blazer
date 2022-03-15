@@ -7,6 +7,6 @@ NODES=2
 CPUS=8
 PROCS=$CPUS
 
-salloc -n $CPUS -N $NODES mpirun -np $PROCS $PWD/venv/bin/blazer run -r -s -n $1 -m -c bash -c "hostname"
+salloc -n $CPUS -N $NODES mpirun -np $PROCS $PWD/venv/bin/python blazer/examples/example4.py
 
 
