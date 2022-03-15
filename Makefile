@@ -17,6 +17,25 @@ lint:
 install:
 	python setup.py install
 	python setup.py clean
-	
+
+.PHONY: update
+update:
+	git add blazer
+	git commit -m "Updates"
+	git push origin main
+	python setup.py install
+
+.PHONY: release
+release:
+	bash ./bin/tag.sh
+
+.PHONY: clean
+clean:
+	python setup.py clean
+
+.PHONY: tests
+tests:
+	bash ./bin/tests.sh
+
 .PHONY: all
-all: format lint install
+all: format lint install test
