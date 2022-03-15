@@ -1,6 +1,6 @@
 import logging
 from typing import Callable, Any
-from pipe import Pipe
+
 
 class JobClass:
 
@@ -18,7 +18,7 @@ class JobClass:
         try:
             logging.debug("JobClass acquiring lock")
             self.thenclass.lock.acquire()
-            logging.debug("Calling func %s %s %s", self.func,args, kwargs)
+            logging.debug("Calling func %s %s %s", self.func, args, kwargs)
             self.thenclass.result = self.job(data)
             return self.thenclass
         finally:
@@ -27,8 +27,7 @@ class JobClass:
 
 
 class ThenClass:
-    
-    result : Any = None
+    result: Any = None
 
     def __init__(self, func):
         from multiprocessing import Condition
@@ -56,13 +55,14 @@ class ThenClass:
             result = self.result
             if isinstance(self.result, ThenClass):
                 result = self.result.result
-            logging.info("then: Invoking next %s with result %s",next, result)
+            logging.info("then: Invoking next %s with result %s", next, result)
             self.result = next(result)
             return self
         finally:
             self.lock.release()
             logging.info("then: released lock")
-                
+
+
 def Then(func, *args, **kwargs):
     tc = ThenClass(func)
     return tc

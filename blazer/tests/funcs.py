@@ -1,4 +1,3 @@
-
 def calc_some(value, *args):
     """ Do some calculations """
     result = {'some': value}

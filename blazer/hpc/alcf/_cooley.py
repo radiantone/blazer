@@ -1,16 +1,14 @@
-import logging
-
-from contextlib import contextmanager
-import traceback
-from pipe import Pipe
-import paramiko
 import getpass
+import logging
+import traceback
+
+import paramiko
+
 from .then import Then
 
 
 @Then
 def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=None, code=None, password=False):
-
     class Job:
 
         def __init__(self):
@@ -21,12 +19,13 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
         def login(self):
             logging.debug("[COOLEY]: Logging in from Job")
             pw = getpass.getpass("Cooley MAF Password: ")
-            self._ssh.connect(hostname="cooley.alcf.anl.gov", username=user, password=pw)
+            self._ssh.connect(hostname="cooley.alcf.anl.gov",
+                              username=user, password=pw)
 
             return self
 
         def __call__(self, *args, **kwargs):
-            logging.info("[COOLEY]: Job call %s %s",args, kwargs)
+            logging.info("[COOLEY]: Job call %s %s", args, kwargs)
             import time
             import datetime
 
@@ -43,7 +42,7 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
 
             job_id = None
             for line in stdout.read().splitlines():
-                logging.info("[COOLEY][qsub]: %s",line)
+                logging.info("[COOLEY][qsub]: %s", line)
                 parts = line.split()
                 if len(parts) == 1:
                     job_id = int(parts[0])
@@ -64,7 +63,8 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
                 for line in lines:
                     if str(line).find("exiting") > -1:
                         if q == "debug":
-                            logging.info("[COOLEY]: Waiting for job to exit debug queue.")
+                            logging.info(
+                                "[COOLEY]: Waiting for job to exit debug queue.")
                             is_exiting = True
                         else:
                             not_finished = False
@@ -73,34 +73,35 @@ def job(user='nobody', q="debug", n=1, t=5, A='datascience', venv=None, script=N
                     # If failed, throw exception
                     if False:
                         raise Exception()
-                
+
                 now = datetime.datetime.now()
                 if now - start > datetime.timedelta(minutes=t):
                     not_finished = False
                 time.sleep(1)
 
             logging.debug("[COOLEY]: exiting...")
-            
+
             return "cooley" + str(data)
 
     logging.debug("Returning job from cooley")
     return Job()
 
+
 class run(object):
 
     def __exit__(self, _type, value, _traceback):
-        
+
         stack = traceback.extract_stack()
-        file, end = self._get_origin_info(stack,'__exit__')
+        file, end = self._get_origin_info(stack, '__exit__')
         self.end = end
-        logging.debug("FILE",self.file,self.start,self.end)
+        logging.debug("FILE", self.file, self.start, self.end)
         with open(file) as code:
             lines = code.readlines()
-            logging.debug("COOLEY CODE: %s",lines[self.start:self.end])
+            logging.debug("COOLEY CODE: %s", lines[self.start:self.end])
 
     def __enter__(self):
         stack = traceback.extract_stack()
-        file, start = self._get_origin_info(stack,'__enter__')
+        file, start = self._get_origin_info(stack, '__enter__')
         self.start = start
         self.file = file
 
@@ -112,4 +113,3 @@ class run(object):
                 break
 
         return origin[0], origin[1]
-

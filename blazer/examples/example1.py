@@ -1,10 +1,5 @@
-import logging
-
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.DEBUG
-)
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
+from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, size
 
 
 def calc_some(value, *args):

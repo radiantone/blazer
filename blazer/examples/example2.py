@@ -1,5 +1,5 @@
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, where, select, filter, rank, size
+from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter, size
 
 
 def calc_some(value, *args):
@@ -51,12 +51,10 @@ with blazer.begin():
         calc_more_stuff
     ])
 
-
     def get_data():
         """ Data generator """
         for i in range(0, (size * 2) + 2):
             yield i
-
 
     # In this example we scatter a list of input data across
     # all the compute nodes and execute a complex workflow on

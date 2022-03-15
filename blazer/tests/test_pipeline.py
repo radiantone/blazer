@@ -1,6 +1,7 @@
 import blazer
-from blazer.hpc.mpi import parallel, pipeline, partial as p, scatter
-from .funcs import calc_more_stuff, calc_some, calc_stuff, add_date
+from blazer.hpc.mpi import pipeline, partial as p
+from .funcs import calc_some, calc_stuff, add_date
+
 
 def test_pipeline():
     with blazer.begin():
@@ -16,4 +17,4 @@ def test_pipeline():
         if blazer.ROOT:
             _true = 'this' in r
 
-            assert _true 
+            assert _true

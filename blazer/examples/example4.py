@@ -1,7 +1,5 @@
-import logging
-logging.basicConfig(
-    format="%(asctime)s : %(levelname)s : %(message)s", level=logging.INFO
-)
+from blazer.logging import logging
+
 import blazer
 import numpy as np
 
@@ -9,8 +7,8 @@ from blazer.hpc.mpi.primitives import host, rank
 from numba import vectorize
 from timeit import default_timer as timer
 
-def dovectors():
 
+def dovectors():
     @vectorize(['float32(float32, float32)'], target='cuda')
     def dopow(a, b):
         return a ** b
@@ -25,6 +23,7 @@ def dovectors():
     duration = timer() - start
     return duration
 
+
 with blazer.begin(gpu=True):  # on-fabric MPI scheduler
     logging.info(f"[{host}][{rank}] Entered MPI context")
     # Behind the scenes, the blazer on-fabric scheduler will
@@ -35,12 +34,10 @@ with blazer.begin(gpu=True):  # on-fabric MPI scheduler
         logging.info(f"   [{host}][{rank}] Got GPU context")
         if gpu:
             logging.info(f"   [{host}][{rank}] Got GPU: {gpu}")
-            #print(dovectors())
+            # print(dovectors())
         else:
             logging.info(f"   [{host}][{rank}] NO GPU:")
 
     logging.info(f"   [{host}][{rank}] Exiting GPU context")
 
 logging.info(f"[{host}][{rank}] Exiting MPI context")
-
-
