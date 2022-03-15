@@ -19,7 +19,7 @@ install:
 	python setup.py clean
 
 .PHONY: update
-update:
+update: format lint
 	git add blazer
 	git commit -m "Updates"
 	git push origin main
