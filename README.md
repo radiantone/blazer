@@ -4,7 +4,6 @@
 An HPC abstraction over MPI that uses pipes and pydash primitives. Blazer will handle all the MPI orchestration behind the scenes for you. You just work strictly with data and functions. Easy!
 
 ### Install
-
 From pypi
 ```bash
 $ pip install blazer
@@ -20,6 +19,11 @@ $ source venv/bin/activate
 (venv) $ python setup.py install
 ```
 
+### Linting
+```bash
+$ make lint
+```
+
 ### Tests
 ```bash
 (venv) $ mpirun -n 2 python setup.py test
@@ -28,6 +32,12 @@ blazer/tests/test_pipeline.py::test_pipeline PASSED                      [100%]
 
 ============================== 2 passed in 0.48s ===============================
 ctrl-c
+```
+
+or
+
+```bash
+$ ./bin/tests.sh
 ```
 
 ### Examples
