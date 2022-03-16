@@ -29,11 +29,11 @@ install:
 
 .PHONY: update
 update: format lint
-	git add blazer
+	git add bin blazer
 	git commit -m "Updates"
 	git push origin main
 	python setup.py install
-	
+
 .PHONY: release
 release:
 	bash ./bin/tag.sh
@@ -43,8 +43,8 @@ clean:
 	python setup.py clean
 
 .PHONY: tests
-tests:
+tests: 
 	bash ./bin/tests.sh
 
 .PHONY: all
-all: format lint install test
+all: format lint install tests clean
