@@ -32,7 +32,8 @@ install: depends init
 
 .PHONY: update
 update: format lint
-	git add bin blazer
+	pip freeze | grep -v blazer > requirements.txt
+	git add bin blazer requirements.txt Makefile
 	git commit -m "Updates"
 	git push origin main
 	python setup.py install
@@ -57,4 +58,4 @@ tests: format lint
 	bash ./bin/tests.sh
 
 .PHONY: all
-all: format lint install tests clean
+all: format lint update docs install tests clean
