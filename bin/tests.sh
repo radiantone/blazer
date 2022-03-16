@@ -4,3 +4,4 @@ echo "Running example$i"
 time mpirun -n 4 venv/bin/python blazer/examples/example$i.py
 echo "-----------------------------------------------------------------"
 done
+./bin/rungpu.sh
