@@ -7,7 +7,7 @@ from blazer.hpc.mpi import stream
 
 
 def datagen() -> Generator:
-    for i in range(0, 10):
+    for i in range(0, 1000):
         r = randrange(2)
         v = randrange(100)
         if r:
