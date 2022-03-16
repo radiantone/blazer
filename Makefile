@@ -33,7 +33,7 @@ install: depends init
 .PHONY: update
 update: format lint
 	pip freeze | grep -v blazer > requirements.txt
-	git add bin blazer requirements.txt Makefile
+	git add docs bin blazer requirements.txt Makefile
 	git commit --allow-empty -m "Updates"
 	git push origin main
 	python setup.py install
