@@ -2,13 +2,15 @@
 black = black --target-version py39 blazer
 isort = isort --profile black blazer
 
+.PHONY: depends
+depends:
+	bash ./bin/depends.sh
 
 .PHONY: init
-init:
+init: depends
 	echo "Setting up virtual environment in venv/"
 	python3 -m venv venv
 	echo "Virtual environment complete."
-	source venv/bin/activate
 
 .PHONY: format
 format:
@@ -22,7 +24,7 @@ lint:
 	$(black) --check --diff
 
 .PHONY: install
-install:
+install: depends init
 	pip install -r requirements.txt
 	python setup.py install
 	python setup.py clean
@@ -35,7 +37,7 @@ update: format lint
 	python setup.py install
 
 .PHONY: release
-release:
+release: update
 	bash ./bin/tag.sh
 
 .PHONY: clean
@@ -43,7 +45,8 @@ clean:
 	python setup.py clean
 
 .PHONY: tests
-tests: 
+tests: format lint
+	python setup.py install
 	bash ./bin/tests.sh
 
 .PHONY: all

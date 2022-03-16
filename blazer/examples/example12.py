@@ -1,3 +1,4 @@
+""" Streaming map/reduce example """
 from itertools import groupby
 from random import randrange
 from typing import Generator
