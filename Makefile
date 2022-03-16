@@ -38,7 +38,6 @@ update: format lint
 	git push origin main
 	python setup.py install
 
-
 .PHONY: docs
 docs:
 	cd docs
