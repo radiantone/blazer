@@ -16,6 +16,8 @@ $ cd blazer
 $ make init install
 ```
 
+NOTE: For some tests ensure you have slurm configured properly (single or muli-machine). However, using slurm is not required to use blazer.
+
 ### Linting
 ```bash
 $ make lint
