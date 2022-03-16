@@ -15,7 +15,7 @@ with blazer.begin():
         print("DATA: ", data)
         print("EXPECTING: ", sum(data))
     else:
-        data = None
+        data = []
 
     result = mapreduce(add, add, data)
 

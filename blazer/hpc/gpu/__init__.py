@@ -1,6 +1,6 @@
 from multiprocessing import Condition
 from queue import SimpleQueue
-from typing import Any
+from typing import Any, Dict
 
 from numba import cuda
 
@@ -9,7 +9,7 @@ from blazer.logs import logging
 from ..mpi.primitives import comm, host, rank, size
 from .utils import main
 
-ranks_exit_request = SimpleQueue()
+ranks_exit_request: SimpleQueue = SimpleQueue()
 
 
 def handle_request(host_queues, requests, gpu_request):
@@ -52,10 +52,10 @@ def handle_request(host_queues, requests, gpu_request):
 
 
 class gpu:
-    using_gpu = None
+    using_gpu: Dict[str, Any] = {}
 
-    gpu_queue = SimpleQueue()
-    requests = SimpleQueue()
+    gpu_queue: SimpleQueue = SimpleQueue()
+    requests: SimpleQueue = SimpleQueue()
 
     host_queues: dict = {}
     lock = Condition()

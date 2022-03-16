@@ -11,9 +11,9 @@ def parallel(defers: List, *args):
 
     threads = [Thread(target=defer, args=args) for defer in defers]
     logging.info("Starting parallel threads")
-    _ = [thread.start() for thread in threads]
+    _ = [thread.start() for thread in threads]  # type: ignore[func-returns-value]
     logging.info("Waiting on parallel threads")
-    _ = [thread.join() for thread in threads]
+    _ = [thread.join() for thread in threads]  # type: ignore[func-returns-value]
 
 
 def scatter(data: Any, func: Callable):

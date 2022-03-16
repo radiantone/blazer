@@ -22,7 +22,7 @@ with blazer.begin():
         data = ["one", "two", "two", "three", "three", "three"]
         print("DATA: ", data)
     else:
-        data = None
+        data = []
 
     result = mapreduce(
         count,
