@@ -34,7 +34,7 @@ install: depends init
 update: format lint
 	pip freeze | grep -v blazer > requirements.txt
 	git add bin blazer requirements.txt Makefile
-	git commit -m "Updates"
+	git commit --allow-empty -m "Updates"
 	git push origin main
 	python setup.py install
 
