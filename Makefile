@@ -37,8 +37,14 @@ update: format lint
 	git push origin main
 	python setup.py install
 
+
+.PHONY: docs
+docs:
+	cd docs
+	make -C docs html
+
 .PHONY: release
-release: update
+release: update docs
 	bash ./bin/tag.sh
 
 .PHONY: clean
