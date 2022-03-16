@@ -2,6 +2,14 @@
 black = black --target-version py39 blazer
 isort = isort --profile black blazer
 
+
+.PHONY: init
+init:
+	echo "Setting up virtual environment in venv/"
+	python3 -m venv venv
+	echo "Virtual environment complete."
+	source venv/bin/activate
+
 .PHONY: format
 format:
 	$(isort)
@@ -15,6 +23,7 @@ lint:
 
 .PHONY: install
 install:
+	pip install -r requirements.txt
 	python setup.py install
 	python setup.py clean
 
@@ -24,7 +33,7 @@ update: format lint
 	git commit -m "Updates"
 	git push origin main
 	python setup.py install
-
+	
 .PHONY: release
 release:
 	bash ./bin/tag.sh
