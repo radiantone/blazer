@@ -44,7 +44,7 @@ docs:
 	make -C docs html
 
 .PHONY: release
-release: update test docs 
+release: update tests docs 
 	bash ./bin/tag.sh
 
 .PHONY: clean
