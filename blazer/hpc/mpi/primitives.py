@@ -2,19 +2,20 @@
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
 
+import warnings
 from functools import partial
 from threading import Thread
 from typing import Any, Callable, Generator, List, cast
-import numpy as np
-import warnings
-warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
 
 import dill
+import numpy as np
 from mpi4py import MPI
 from numpy import iterable
 from pydash import flatten
 
 from blazer.logs import logging
+
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -143,17 +144,27 @@ if rank != 0:
     thread = Thread(target=run)
     thread.start()
 
-def fetch(data: List) -> List:
-    """ Given a sharded data set, retrieve it from the ranks """
-    data = cast(List,comm.gather(data, root=0))
+
+def fetch(data: List, stream=False):
+    """Given a sharded data set, retrieve it from the ranks"""
+    data = cast(List, comm.gather(data, root=0))
     if rank == 0:
-        _data = flatten([list(d) for d in data])
-        return _data
+        if not stream:
+            _data = flatten([list(d) for d in data])
+            return _data
+        else:
+
+            def fetchstream(data) -> Generator:
+                for d in data:
+                    yield list(d)
+
+            return fetchstream(data)
     else:
         return []
 
+
 def shard(data: List):
-    """ Take a data set and spread it across the ranks """
+    """Take a data set and spread it across the ranks"""
     import numpy as np
 
     if rank == 0:
@@ -161,10 +172,11 @@ def shard(data: List):
         _chunks = np.array_split(data, size)
     else:
         _chunks = None
-    
+
     data = comm.scatter(_chunks, root=0)
 
     return data
+
 
 def parallel(defers: List, *args):
     """Run list of tasks in parallel across compute fabric"""

@@ -6,6 +6,7 @@ from pydash import filter_ as filter
 from pydash import flatten, get, omit
 
 from .primitives import (
+    fetch,
     host,
     map,
     mapreduce,
@@ -14,10 +15,9 @@ from .primitives import (
     rank,
     reduce,
     scatter,
+    shard,
     size,
     stream,
-    shard,
-    fetch
 )
 
 __all__ = (
@@ -40,5 +40,5 @@ __all__ = (
     "size",
     "filter",
     "shard",
-    "fetch"
+    "fetch",
 )
