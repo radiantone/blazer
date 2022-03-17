@@ -16,6 +16,8 @@ from .primitives import (
     scatter,
     size,
     stream,
+    shard,
+    fetch
 )
 
 __all__ = (
@@ -37,4 +39,6 @@ __all__ = (
     "host",
     "size",
     "filter",
+    "shard",
+    "fetch"
 )

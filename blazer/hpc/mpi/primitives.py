@@ -4,7 +4,10 @@ the needed behavior """
 
 from functools import partial
 from threading import Thread
-from typing import Any, Callable, Generator, List
+from typing import Any, Callable, Generator, List, cast
+import numpy as np
+import warnings
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
 
 import dill
 from mpi4py import MPI
@@ -140,6 +143,28 @@ if rank != 0:
     thread = Thread(target=run)
     thread.start()
 
+def fetch(data: List) -> List:
+    """ Given a sharded data set, retrieve it from the ranks """
+    data = cast(List,comm.gather(data, root=0))
+    if rank == 0:
+        _data = flatten([list(d) for d in data])
+        return _data
+    else:
+        return []
+
+def shard(data: List):
+    """ Take a data set and spread it across the ranks """
+    import numpy as np
+
+    if rank == 0:
+        data = list(np.array(data, dtype=object))
+        _chunks = np.array_split(data, size)
+    else:
+        _chunks = None
+    
+    data = comm.scatter(_chunks, root=0)
+
+    return data
 
 def parallel(defers: List, *args):
     """Run list of tasks in parallel across compute fabric"""
