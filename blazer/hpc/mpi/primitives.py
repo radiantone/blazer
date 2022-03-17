@@ -5,7 +5,7 @@ the needed behavior """
 from functools import partial
 from threading import Thread
 from typing import Any, Callable, Generator, List
-import numpy
+
 import dill
 from mpi4py import MPI
 from numpy import iterable
@@ -24,8 +24,9 @@ logging.debug(f"ME: {host} RANK {rank} and procs {size}")
 
 
 def global_var(name, value):
-    logging.info("[%s][%s] global_var %s %s", host,rank,name,value)
+    logging.info("[%s][%s] global_var %s %s", host, rank, name, value)
     globals()[name] = value
+
 
 class mpidict:
     def __getitem__(self, key):
@@ -37,31 +38,32 @@ class mpidict:
 
 
 class variable:
-
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self.vars = {}
-    
-        logging.debug("[%s][%s] INIT %s",host,rank,[self.vars for i in range(0,size)])
-        self.vars = comm.alltoall([self.vars for i in range(0,size)])
-        logging.debug("[%s][%s] INIT %s",host,rank,self.vars)
+
+        logging.debug(
+            "[%s][%s] INIT %s", host, rank, [self.vars for i in range(0, size)]
+        )
+        self.vars = comm.alltoall([self.vars for i in range(0, size)])
+        logging.debug("[%s][%s] INIT %s", host, rank, self.vars)
 
     def __getitem__(self, key):
-        logging.debug("[%s][%s] GETTING %s %s",host,rank,key,self.vars)
+        logging.debug("[%s][%s] GETTING %s %s", host, rank, key, self.vars)
         for d in self.vars:
             if key in d:
                 return d[key]
         return None
 
     def __setitem__(self, key, value):
-        logging.debug("[%s][%s] SETTING 1 %s %s %s",host,rank,key,value, self.vars)
+        logging.debug("[%s][%s] SETTING 1 %s %s %s", host, rank, key, value, self.vars)
         self.vars[rank][key] = value
-        logging.debug("[%s][%s] SETTING 2 %s %s %s",host,rank,key,value,self.vars)
-        allvars = [self.vars[rank] for i in range(0,size)]
-        logging.debug("[%s][%s] SETTING 3 %s ",host,rank,allvars)
+        logging.debug("[%s][%s] SETTING 2 %s %s %s", host, rank, key, value, self.vars)
+        allvars = [self.vars[rank] for i in range(0, size)]
+        logging.debug("[%s][%s] SETTING 3 %s ", host, rank, allvars)
         self.vars = comm.alltoall(allvars)
-        logging.debug("[%s][%s] SETTING DONE %s",host,rank, self.vars)
-        
+        logging.debug("[%s][%s] SETTING DONE %s", host, rank, self.vars)
+
     def __enter__(self, *args, **kwargs):
 
         return self
@@ -70,8 +72,9 @@ class variable:
         logging.debug("[%s][%s] Variable Context exiting", host, rank)
 
         if rank == 0:
-            logging.debug("[%s][%s] MASTER Variable Context exiting", host, rank)    
+            logging.debug("[%s][%s] MASTER Variable Context exiting", host, rank)
             stop()
+
 
 class begin:
     def __init__(self, *args, **kwargs):
