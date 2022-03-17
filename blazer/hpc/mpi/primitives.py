@@ -23,20 +23,6 @@ MASTER = rank == 0
 logging.debug(f"ME: {host} RANK {rank} and procs {size}")
 
 
-def global_var(name, value):
-    logging.info("[%s][%s] global_var %s %s", host, rank, name, value)
-    globals()[name] = value
-
-
-class mpidict:
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-        comm.bcast(vars, root=0)
-
-
 class variable:
     def __init__(self, **kwargs):
         self.kwargs = kwargs
