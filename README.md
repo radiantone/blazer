@@ -191,7 +191,6 @@ from typing import Generator
 import blazer
 from blazer.hpc.mpi import stream
 
-
 def datagen() -> Generator:
     for i in range(0, 1000):
         r = randrange(2)
@@ -201,15 +200,12 @@ def datagen() -> Generator:
         else:
             yield {"zero": 0, "value": v}
 
-
 def key_func(k):
     return k["key"]
-
 
 def map(datum):
     datum["key"] = list(datum.keys())[0]
     return datum
-
 
 def reduce(datalist):
     from blazer.hpc.mpi import rank
@@ -217,7 +213,6 @@ def reduce(datalist):
     _list = sorted(datalist, key=key_func)
     grouped = groupby(_list, key_func)
     return [{"rank": rank, key: list(group)} for key, group in grouped]
-
 
 with blazer.begin():
     import json
