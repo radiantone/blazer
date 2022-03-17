@@ -177,7 +177,60 @@ To run:
 30
 ```
 
-> NOTE: blazer has only been tested on `mpirun (Open MPI) 4.1.0`
+#### Streaming Compute
+
+Blazer supports the notion of `streaming compute` to handle jobs where the data can't fit into memory on a single machine.
+In this example we implement a map/reduce computation where everything is streaming from the source data through the results without loading all the data into memory.
+
+```python
+""" Streaming map/reduce example """
+from itertools import groupby
+from random import randrange
+from typing import Generator
+
+import blazer
+from blazer.hpc.mpi import stream
+
+
+def datagen() -> Generator:
+    for i in range(0, 1000):
+        r = randrange(2)
+        v = randrange(100)
+        if r:
+            yield {"one": 1, "value": v}
+        else:
+            yield {"zero": 0, "value": v}
+
+
+def key_func(k):
+    return k["key"]
+
+
+def map(datum):
+    datum["key"] = list(datum.keys())[0]
+    return datum
+
+
+def reduce(datalist):
+    from blazer.hpc.mpi import rank
+
+    _list = sorted(datalist, key=key_func)
+    grouped = groupby(_list, key_func)
+    return [{"rank": rank, key: list(group)} for key, group in grouped]
+
+
+with blazer.begin():
+    import json
+
+    mapper = stream(datagen(), map, results=True)
+    reducer = stream(mapper, reduce, results=True)
+    if blazer.ROOT:
+        for result in reducer:
+            blazer.print("RESULT", json.dumps(result, indent=4))
+```
+
+> NOTE: blazer has (currently) only been tested on `mpirun (Open MPI) 4.1.0`
+
 ## Overview
 
 Blazer is a _high-performance computing_ (HPC) library that hides the complexities of a super computer's _message-passing interface_ or (MPI).
@@ -256,6 +309,31 @@ with blazer.begin(gpu=True):  # on-fabric MPI scheduler
     with blazer.gpu() as gpu:  # on-metal GPU scheduler
         # gpu object contains metadata about the GPU assigned
         print(dovectors())
+```
+
+
+#### Shared Data Context Handler
+
+Blazer supports synchronizing shared data across ranks seamlessly. Here is an example of sharing a dictionary where each rank adds its own data to the dictionary and it is available to all other ranks magically!
+
+```python
+from random import randrange
+
+import blazer
+from blazer.hpc.mpi.primitives import rank
+
+with blazer.variable() as vars:
+    rv = randrange(10)
+    vars["rank" + str(rank)] = [
+        {"key": randrange(10)},
+        randrange(10),
+        randrange(10),
+        randrange(10),
+    ]
+
+    print("RANK:", rank, "DATA", vars.vars)
+
+blazer.print(vars["rank1"])
 ```
 
 ### Cross-Cluster Supercomputing
