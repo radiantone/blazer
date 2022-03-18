@@ -2,6 +2,7 @@
 
 
 An HPC abstraction over MPI that uses pipes and pydash primitives. Blazer will handle all the MPI orchestration behind the scenes for you. You just work strictly with data and functions. Easy!
+[![Documentation Status](https://readthedocs.org/projects/blazerhpc/badge/?version=latest)](https://blazerhpc.readthedocs.io/en/latest/?badge=latest)
 
 ### Install
 From pypi
