@@ -58,3 +58,4 @@ tests: format lint
 
 .PHONY: all
 all: format lint update docs install tests clean
+	git status
