@@ -1,7 +1,6 @@
 """ MPI implementation of compute primitives
 Will use special scheduler running on rank 0 to orchestrate
 the needed behavior """
-
 import warnings
 from functools import partial
 from threading import Thread
@@ -27,7 +26,32 @@ MASTER = rank == 0
 logging.debug(f"ME: {host} RANK {rank} and procs {size}")
 
 
+def watch(watchers):
+    logging.debug("watch[%s][%s] watch loop started", host, rank)
+    while True:
+        logging.debug("watch[%s][%s] waiting for watch message", host, rank)
+        msg = comm.recv(tag=4)
+        logging.debug("watch[%s][%s] message %s", host, rank, msg)
+        if msg == "break":
+            break
+        if msg["key"] in watchers:
+            logging.debug(
+                "watch[%s][%s] invoking watch function %s",
+                host,
+                rank,
+                watchers[msg["key"]],
+            )
+            watchers[msg["key"]](msg)
+
+    logging.debug("watch[%s][%s] watch loop exiting", host, rank)
+
+
 class variable:
+
+    watchers: dict = {}
+    watch_thread = Thread(target=watch, args=(watchers,))
+    watch_thread.start()
+
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self.vars = {}
@@ -54,13 +78,19 @@ class variable:
         self.vars = comm.alltoall(allvars)
         logging.debug("[%s][%s] SETTING DONE %s", host, rank, self.vars)
 
+        for i in range(0, size):
+            comm.send({"key": key, "value": value}, dest=i, tag=4)
+
+    def watch(self, key, func: Callable):
+        self.watchers[key] = func
+
     def __enter__(self, *args, **kwargs):
 
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         logging.debug("[%s][%s] Variable Context exiting", host, rank)
-
+        comm.send("break", dest=rank, tag=4)
         if rank == 0:
             logging.debug("[%s][%s] MASTER Variable Context exiting", host, rank)
             stop()
