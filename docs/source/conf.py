@@ -22,7 +22,7 @@ copyright = '2022, Darren Govoni'
 author = 'Darren Govoni'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.33'
+release = '0.1.34'
 
 
 # -- General configuration ---------------------------------------------------
