@@ -18,7 +18,7 @@ function teardown
 
 
 # Add test functions here
-function test_parallel
+function test_gpu
 {
   mpirun -n 4 ../../venv/bin/python ../../blazer/examples/example4.py 
   # Assert

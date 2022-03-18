@@ -18,7 +18,7 @@ function teardown
 
 
 # Add test functions here
-function test_parallel
+function test_data_shard
 {
   mpirun -n 4 ../../venv/bin/python ../../blazer/examples/example15.py 
   # Assert

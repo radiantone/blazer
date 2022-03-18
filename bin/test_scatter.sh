@@ -17,7 +17,7 @@ function teardown
 }
 
 # Add test functions here
-function test_parallel
+function test_scatter
 {
   mpirun -n 4 ../../venv/bin/python ../../blazer/examples/example6.py 
   # Assert

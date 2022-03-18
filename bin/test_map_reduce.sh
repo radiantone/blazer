@@ -18,7 +18,7 @@ function teardown
 
 
 # Add test functions here
-function test_parallel
+function test_map_reduce
 {
   mpirun -n 4 ../../venv/bin/python ../../blazer/examples/example3.py 
   # Assert
