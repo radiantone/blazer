@@ -54,7 +54,16 @@ clean:
 .PHONY: tests
 tests: format lint
 	python setup.py install
-	bash ./bin/tests.sh
+	bash ./bin/test_map_reduce.sh
+	bash ./bin/test_gpu.sh
+	bash ./bin/test_mapreduce.sh
+	bash ./bin/test_scatter.sh
+	bash ./bin/test_stream.sh
+	bash ./bin/test_scatter_stream.sh
+	bash ./bin/test_map_reduce_stream.sh
+	bash ./bin/test_environment_range.sh
+	bash ./bin/test_environment_watch.sh
+	bash ./bin/test_data_shard.sh
 
 .PHONY: all
 all: format lint update docs install tests clean
