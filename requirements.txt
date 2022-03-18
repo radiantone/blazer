@@ -23,7 +23,6 @@ cryptography==36.0.1
 dask==2022.1.1
 dill==0.3.4
 distributed==2022.1.1
-docutils==0.18.1
 flake8==4.0.1
 fsspec==2022.1.0
 GPUtil==1.4.0
