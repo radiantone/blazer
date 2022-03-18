@@ -50,7 +50,6 @@ class environment:
 
     watchers: dict = {}
     watch_thread = Thread(target=watch, args=(watchers,))
-    watch_thread.start()
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -85,7 +84,7 @@ class environment:
         self.watchers[key] = func
 
     def __enter__(self, *args, **kwargs):
-
+        self.watch_thread.start()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
@@ -132,6 +131,7 @@ def stop(barrier=True):
         for i in range(1, size):
             logging.debug(f"Master sending break to rank {i}")
             comm.send("break", tag=0, dest=i)
+            comm.send("break", tag=4, dest=i)
 
         if barrier:
             logging.debug("Master Waiting on barrier")
