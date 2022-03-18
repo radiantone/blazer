@@ -46,7 +46,7 @@ def watch(watchers):
     logging.debug("watch[%s][%s] watch loop exiting", host, rank)
 
 
-class variable:
+class environment:
 
     watchers: dict = {}
     watch_thread = Thread(target=watch, args=(watchers,))

@@ -3,7 +3,7 @@ from random import randrange
 import blazer
 from blazer.hpc.mpi.primitives import rank
 
-with blazer.variable() as vars:
+with blazer.environment() as vars:
 
     def watch(var):
         print("watch[rank {}] var {}".format(rank, var))

@@ -3,7 +3,7 @@ from random import randrange
 import blazer
 from blazer.hpc.mpi.primitives import rank
 
-with blazer.variable() as vars:
+with blazer.environment() as vars:
     rv = randrange(10)
     vars["rank" + str(rank)] = [
         {"key": randrange(10)},
