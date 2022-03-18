@@ -64,7 +64,10 @@ tests: format lint
 	bash ./bin/test_environment_range.sh
 	bash ./bin/test_environment_watch.sh
 	bash ./bin/test_data_shard.sh
-
+	@bash -c 'echo'
+	@bash -c 'echo All tests passed!'
+	@bash -c 'echo -----------------------------------------------------------------'
+	
 .PHONY: all
 all: format lint update docs install tests clean
 	git status
