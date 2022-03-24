@@ -17,10 +17,6 @@ def datagen() -> Generator:
             yield {"zero": 0, "value": v}
 
 
-def key_func(k):
-    return k["key"]
-
-
 def map(datum):
     datum["key"] = list(datum.keys())[0]
     return datum
@@ -28,6 +24,9 @@ def map(datum):
 
 def reduce(datalist):
     from blazer.hpc.mpi import rank
+
+    def key_func(k):
+        return k["key"]
 
     _list = sorted(datalist, key=key_func)
     grouped = groupby(_list, key_func)

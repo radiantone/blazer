@@ -65,6 +65,7 @@ tests: format lint
 	bash ./bin/test_environment_watch.sh
 	bash ./bin/test_data_shard.sh
 	bash ./bin/rungpu.sh
+	bash ./bin/test_kernel.sh
 	@bash -c 'echo'
 	@bash -c 'echo All tests passed!'
 	@bash -c 'echo -----------------------------------------------------------------'

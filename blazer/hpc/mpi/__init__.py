@@ -5,6 +5,7 @@ from pydash import chunk
 from pydash import filter_ as filter
 from pydash import flatten, get, omit
 
+from .primitives import comm as mpi
 from .primitives import (
     fetch,
     host,
@@ -25,6 +26,7 @@ __all__ = (
     "scatter",
     "pipeline",
     "map",
+    "mpi",
     "mapreduce",
     "reduce",
     "partial",
