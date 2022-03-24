@@ -51,6 +51,7 @@ release: update tests docs
 .PHONY: clean
 clean:
 	python setup.py clean
+	git status
 
 .PHONY: tests
 tests: format lint
