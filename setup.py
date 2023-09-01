@@ -128,7 +128,7 @@ setup(
         'pytest',
         'pipe==1.6.0',
         'numba',
-        'mpi4py==3.1.3',
+        'mpi4py',
         'dill==0.3.4'
     ],
     license=about['__license__'],
